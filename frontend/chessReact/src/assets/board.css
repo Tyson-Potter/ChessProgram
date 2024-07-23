@@ -1,0 +1,23 @@
+.grid {
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(8, 90px);
+    grid-template-rows: repeat(8, 90px);
+    gap: 0px;
+}
+.cell {
+    width: 90px;
+    height: 90px;
+}
+.black {
+    background-color: gray;
+}
+.white {
+    background-color: white;
+}
+.board-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full viewport height */
+}
