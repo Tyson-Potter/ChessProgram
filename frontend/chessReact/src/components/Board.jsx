@@ -22,6 +22,56 @@ function Board(gameState) {
 
 
    
+   
+ 
+    const pieces = [
+        { piece: 'whiteRook', x: 0, y: 0, hasMoved: false },
+        { piece: 'whiteKnight', x: 1, y: 0 },
+        { piece: 'whiteBishop', x: 2, y: 0 },
+        { piece: 'whiteQueen', x: 3, y: 0 },
+        { piece: 'whiteKing', x: 4, y: 0, hasMoved: false },
+        { piece: 'whiteBishop', x: 5, y: 0 },
+        { piece: 'whiteKnight', x: 6, y: 0 },
+        { piece: 'whiteRook', x: 7, y: 0, hasMoved: false },
+        { piece: 'whitePawn', x: 0, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 1, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 2, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 3, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 4, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 5, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 6, y: 1, hasMoved: false },
+        { piece: 'whitePawn', x: 7, y: 1, hasMoved: false },
+        { piece: 'blackRook', x: 0, y: 7, hasMoved: false },
+        { piece: 'blackKnight', x: 1, y: 7 },
+        { piece: 'blackBishop', x: 2, y: 7 },
+        { piece: 'blackQueen', x: 3, y: 7 },
+        { piece: 'blackKing', x: 4, y: 7, hasMoved: false },
+        { piece: 'blackBishop', x: 5, y: 7 },
+        { piece: 'blackKnight', x: 6, y: 7 },
+        { piece: 'blackRook', x: 7, y: 7, hasMoved: false },
+        { piece: 'blackPawn', x: 0, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 1, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 2, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 3, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 4, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 5, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 6, y: 6, hasMoved: false },
+        { piece: 'blackPawn', x: 7, y: 6, hasMoved: false },
+    ];
+    const pieceImages = {
+        blackBishop: blackBishop,
+        blackKing: blackKing,
+        blackKnight: blackKnight,
+        blackPawn: blackPawn,
+        blackQueen: blackQueen,
+        blackRook: blackRook,
+        whiteBishop: whiteBishop,
+        whiteKing: whiteKing,
+        whiteKnight: whiteKnight,
+        whitePawn: whitePawn,
+        whiteQueen: whiteQueen,
+        whiteRook: whiteRook,
+    };
     let board = [
         {"x": 0, "y": 7, "color": "white"},
         {"x": 1, "y": 7, "color": "black"},
@@ -88,55 +138,14 @@ function Board(gameState) {
         {"x": 6, "y": 0, "color": "black"},
         {"x": 7, "y": 0, "color": "white"}
     ];
-   board  = board.reverse();
-    const pieces = [
-        { piece: 'whiteRook', x: 0, y: 0, hasMoved: false },
-        { piece: 'whiteKnight', x: 1, y: 0 },
-        { piece: 'whiteBishop', x: 2, y: 0 },
-        { piece: 'whiteQueen', x: 3, y: 0 },
-        { piece: 'whiteKing', x: 4, y: 0, hasMoved: false },
-        { piece: 'whiteBishop', x: 5, y: 0 },
-        { piece: 'whiteKnight', x: 6, y: 0 },
-        { piece: 'whiteRook', x: 7, y: 0, hasMoved: false },
-        { piece: 'whitePawn', x: 0, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 1, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 2, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 3, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 4, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 5, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 6, y: 1, hasMoved: false },
-        { piece: 'whitePawn', x: 7, y: 1, hasMoved: false },
-        { piece: 'blackRook', x: 0, y: 7, hasMoved: false },
-        { piece: 'blackKnight', x: 1, y: 7 },
-        { piece: 'blackBishop', x: 2, y: 7 },
-        { piece: 'blackQueen', x: 3, y: 7 },
-        { piece: 'blackKing', x: 4, y: 7, hasMoved: false },
-        { piece: 'blackBishop', x: 5, y: 7 },
-        { piece: 'blackKnight', x: 6, y: 7 },
-        { piece: 'blackRook', x: 7, y: 7, hasMoved: false },
-        { piece: 'blackPawn', x: 0, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 1, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 2, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 3, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 4, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 5, y: 4, hasMoved: false },
-        { piece: 'blackPawn', x: 6, y: 6, hasMoved: false },
-        { piece: 'blackPawn', x: 7, y: 6, hasMoved: false },
-    ];
-    const pieceImages = {
-        blackBishop: blackBishop,
-        blackKing: blackKing,
-        blackKnight: blackKnight,
-        blackPawn: blackPawn,
-        blackQueen: blackQueen,
-        blackRook: blackRook,
-        whiteBishop: whiteBishop,
-        whiteKing: whiteKing,
-        whiteKnight: whiteKnight,
-        whitePawn: whitePawn,
-        whiteQueen: whiteQueen,
-        whiteRook: whiteRook,
-    };
+    
+    localStorage.setItem('color',"white");
+if(localStorage.getItem('color')!=="white"){
+    board  = board.reverse();
+}
+    
+   
+
     const getPieceAtPosition = (x, y) => {
         const piece = pieces.find(piece => piece.x === x && piece.y === y);
         return piece ? piece.piece : null;
