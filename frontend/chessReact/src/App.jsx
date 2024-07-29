@@ -1,12 +1,10 @@
 import Board from './components/Board';
 import { useState } from 'react';
 import './App.css'
-
+import Lobby from './components/Lobby';
 function App() {
-//create set state variable
-const [gameState, setGameState] = useState(true);
 
-
+const [gameState, setGameState] = useState(false);
 
   return (
     <>
@@ -14,7 +12,7 @@ const [gameState, setGameState] = useState(true);
       {gameState ? (
         <Board gameState={gameState}/>
       ) : (
-   null
+   <Lobby/>
       )}
     </>
   );

@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-
+const cors = require("cors");
 const dotenv = require("dotenv");
 
 require("dotenv").config();
@@ -8,10 +8,8 @@ require("dotenv").config();
 const { MongoClient } = require("mongodb");
 const port = process.env.PORT;
 const uri = process.env.uri;
-
-// Middleware to parse JSON bodies
+app.use(cors());
 app.use(express.json());
-// MongoDB connection URI
 
 // MongoDB client
 
@@ -23,8 +21,8 @@ let collection;
 async function connectToDatabase() {
   try {
     await client.connect();
-    const database = client.db("ChessAppDataBase"); // Replace with your database name
-    collection = database.collection("games"); // Replace with your collection name
+    const database = client.db("ChessAppDataBase");
+    collection = database.collection("games");
     console.log("Connected to MongoDB");
 
     // Start the server after the connection is established
@@ -39,13 +37,20 @@ async function connectToDatabase() {
 
 connectToDatabase();
 
-//End Points
-
 app.post("/CreateGame", async (req, res) => {
   try {
     const doc = req.body;
     const result = await collection.insertOne(doc);
     res.status(201).json({ insertedId: result.insertedId });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to insert document" });
+  }
+});
+app.get("/getGames", async (req, res) => {
+  try {
+    const games = await collection.find({}).toArray();
+    res.status(201).json(games);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to insert document" });
