@@ -1,7 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState, useEffect, useCallback } from 'react';
-
-
+import { useState, useEffect, useCallback } from "react";
 
 function Games({ handleJoinGame }) {
   const [games, setGames] = useState([]);
@@ -11,28 +9,21 @@ function Games({ handleJoinGame }) {
       const gamesData = await getGames();
       setGames(gamesData);
     } catch (error) {
-      console.error('Error fetching games:', error);
+      console.error("Error fetching games:", error);
     }
   }, []);
 
   useEffect(() => {
-    console.log('Component mounted');
-    // Fetch data once when the component mounts
     fetchGames();
 
-    // Set up an interval to fetch data every 5 seconds
     const intervalId = setInterval(fetchGames, 5000);
 
-    // Clean up the interval when the component unmounts
     return () => {
-    
       clearInterval(intervalId);
     };
   }, [fetchGames]);
 
-  useEffect(() => {
-  
-  }, [games]);
+  useEffect(() => {}, [games]);
 
   return (
     <div>
@@ -40,10 +31,14 @@ function Games({ handleJoinGame }) {
       <ul>
         {games.length > 0 ? (
           games.map((game) => (
-            <div className="GameCard" key={game.id}>
-              {game.id}
-              <button onClick={() => handleJoinGame(game.id)} id={game.id}>
-                Join {game.creator}'s Game
+            <div className="GameCard" key={game._id}>
+              {game._id}
+              <button
+                key={game.id}
+                onClick={() => handleJoinGame(game._id)}
+                id={game._id}
+              >
+                Join {game.creator}&apos;s Game
               </button>
             </div>
           ))
@@ -55,8 +50,8 @@ function Games({ handleJoinGame }) {
   );
 }
 async function getGames() {
-  const response = await fetch('http://localhost:3000/getGames', {
-    method: 'GET',
+  const response = await fetch("http://localhost:3000/getGames", {
+    method: "GET",
   });
 
   if (!response.ok) {
@@ -65,7 +60,7 @@ async function getGames() {
   }
 
   const result = await response.json();
-  console.log('Fetched games:', result); // Debug log
+
   return result;
 }
 export default Games;
