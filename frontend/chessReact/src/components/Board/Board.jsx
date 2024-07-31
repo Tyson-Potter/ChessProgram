@@ -42,6 +42,8 @@ function Board(gameState) {
       return piece ? piece.piece : null;
     };
     return (
+      <>
+      <h1>You Are {localStorage.getItem("color") }</h1>
       <div className="board-container">
         <div className="grid">
           {board.map((square) => (
@@ -60,6 +62,7 @@ function Board(gameState) {
           ))}
         </div>
       </div>
+      </>
     );
   }
 }

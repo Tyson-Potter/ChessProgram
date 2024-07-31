@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, useCallback } from "react";
 
-function Games({ handleJoinGame }) {
+function Games({ handleJoinGame ,setGameState}) {
   const [games, setGames] = useState([]);
 
   const fetchGames = useCallback(async () => {
@@ -31,11 +31,16 @@ function Games({ handleJoinGame }) {
       <ul>
         {games.length > 0 ? (
           games.map((game) => (
+           // if the game is full dont display it
+            game.numberOfPlayers==2 ? (
+          null
+            ) :  
+
             <div className="GameCard" key={game._id}>
-              {game._id}
+             
               <button
                 key={game.id}
-                onClick={() => handleJoinGame(game._id)}
+                onClick={() => handleJoinGame(game._id,setGameState)}
                 id={game._id}
               >
                 Join {game.creator}&apos;s Game

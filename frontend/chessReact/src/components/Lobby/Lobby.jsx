@@ -3,13 +3,20 @@
 import Games from "../Games/Games";
 
 function Lobby({ setGameState, gameState }) {
+
   async function handleCreateGame(setGameState) {
     let response = await createGame();
     localStorage.setItem("gameId", response._id);
     localStorage.setItem("color", "white");
     setGameState(response.game);
   }
-
+  async function handleJoinGame(gameId) {
+    let response = await joinGame(gameId);
+    localStorage.setItem("gameId", response._id);
+    localStorage.setItem("color", "black");
+  
+    setGameState(response);
+  }
   return (
     <>
       <button
@@ -20,7 +27,7 @@ function Lobby({ setGameState, gameState }) {
         Create Game
       </button>
       Create Game
-      <Games handleJoinGame={handleJoinGame} />
+      <Games setGameState ={setGameState}handleJoinGame={handleJoinGame} />
     </>
   );
 }
@@ -48,6 +55,25 @@ async function createGame() {
 //Todo
 // async function makeMove()
 
-//TODO
-async function handleJoinGame() {}
+async function joinGame(gameId) {
+  
+  const response = await fetch("http://localhost:3000/joinGame", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      id: gameId,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new Error(`Failed to create game: ${errorMessage}`);
+  }
+
+  const result = await response.json();
+
+  return result;
+}
 export default Lobby;

@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 
 require("dotenv").config();
 
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const port = process.env.PORT;
 const uri = process.env.uri;
 app.use(cors());
@@ -48,9 +48,39 @@ app.post("/createGame", async (req, res) => {
       board: defaultBoard,
       piecePostions: defaultPiecePositions,
     };
-    console.log("created a game with id: ", game);
+
     const result = await collection.insertOne(game);
     res.status(201).json({ game: game });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to insert document" });
+  }
+});
+app.put("/joinGame", async (req, res) => {
+  const gameId = req.body.id;
+  console.log("gameId", gameId);
+  try {
+    // Ensure the ID is a valid ObjectId
+    const game = await collection.findOne({ _id: gameId });
+    if (game.numberOfPlayers === 2) {
+      res.status(404).send("Game is full");
+    }
+    game.numberOfPlayers = 2;
+    game.gameStatus = "active";
+    const updatedFields = {
+      numberOfPlayers: 2,
+      gameStatus: "active",
+    };
+    const result = await collection.updateOne(
+      { _id: gameId },
+      { $set: updatedFields }
+    );
+
+    if (game) {
+      res.status(200).json(game);
+    } else {
+      res.status(404).send("Game not found");
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to insert document" });
