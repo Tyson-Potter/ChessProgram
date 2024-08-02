@@ -14,6 +14,7 @@ import whitePawn from "/src/assets/images/white-pawn.png";
 import whiteQueen from "/src/assets/images/white-queen.png";
 import whiteRook from "/src/assets/images/white-rook.png";
 
+
 function Board(gameState) {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -36,7 +37,7 @@ function Board(gameState) {
       whiteRook: whiteRook,
     };
    
-const handleClick = (square) => {
+const handleClick = (square,event) => {
   // if not current players turn do nothing
   if(gameState.gameState.currentTurn != localStorage.getItem("color")){
 
@@ -44,31 +45,44 @@ const handleClick = (square) => {
   }else{
     //Check if Clicked square has a pieace on it 
     const clickedPiece = pieces.find(obj => obj.x === square.x && obj.y === square.y);
+    let buttonElement= event.target;
+    
     if(clickedPiece){
+      
+      console.log("they clicked"+ clickedPiece)
       
       //Check if they clicked thier piece or an enempy piece
       if(clickedPiece.color===localStorage.getItem("color")){
-        console.log("clicked thier Piece")
-        //add css stuff to change what selected square looks like border or somthing
-        setSelectedPiece(clickedPiece);
-       setSelectedSquare(null);
+        //no prior Piece selcted so the current needs to be.
+        if(selectedPiece===null){
+          buttonElement.classList.add('selectedPiece');
+         setSelectedPiece(clickedPiece);
+         //trying to unselect a pieace
+          }else if(clickedPiece.x==selectedPiece.x&&clickedPiece.y==selectedPiece.y){
+            buttonElement.classList.remove('selectedPiece');
+            setSelectedPiece(null);
+          }
       
       }else{
+        //TODO
+        const clickedSquare = board.find(obj => obj.x === square.x && obj.y === square.y);
+        let response=move(selectedPiece,clickedSquare);
+        //set new state if is valid 
         console.log("clicked enemy Piece")
         //clicked an ememy Piece
         if(selectedPiece!=null){
-          console.log("Make Move attack");
+          console.log("kill emenmy attack");
           //sent api request to make a move
               //reset selected Pieace and selected square
         }else{
           //Do Nothing
         }
       }
-
-     
     }else{
       //clicked an empty square
       if(selectedPiece!=null){
+        const clickedSquare = board.find(obj => obj.x === square.x && obj.y === square.y);
+        let response=move(selectedPiece,clickedSquare);
         console.log("Make Move");
         
         //sent api request to make a move
@@ -78,8 +92,8 @@ const handleClick = (square) => {
       }
       
     }
-
   }
+    
 };
     
 
@@ -97,7 +111,7 @@ const handleClick = (square) => {
       <div className="board-container">
         <div className="grid">
           {board.map((square) => (
-            <button  onClick={() => handleClick(square)}
+            <button  onClick={() => handleClick(square,event)}
               key={`${square.x},${square.y}`}
               id={`${square.x},${square.y}`}
               className={`${square.color} cell`}
@@ -114,6 +128,33 @@ const handleClick = (square) => {
       </div>
       </>
     );
+    
   }
+  
+}
+async function move(pieaceToMove,squareToMoveTo) {
+  const response = await fetch("http://localhost:3000/move", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      pieaceToMove: pieaceToMove,
+      playerColor:localStorage.getItem("color"),
+      squareToMoveTo:squareToMoveTo,
+
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new Error(`Failed to create game: ${errorMessage}`);
+  }
+
+  const result = await response.json();
+
+  return result;
 }
 export default Board;
+
+

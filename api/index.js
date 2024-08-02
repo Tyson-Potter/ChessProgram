@@ -95,7 +95,15 @@ app.get("/getGames", async (req, res) => {
     res.status(500).json({ error: "Failed to insert document" });
   }
 });
-
+//TODO
+app.put("/move", async (req, res) => {
+  try {
+    console.log("req.body ", req.body);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to insert document" });
+  }
+});
 //Functions
 function generateRandomId() {
   let length = 20;
@@ -144,41 +152,6 @@ const defaultPiecePositions = [
   { piece: "blackPawn", x: 6, y: 6, hasMoved: false, color: "black" },
   { piece: "blackPawn", x: 7, y: 6, hasMoved: false, color: "black" },
 ];
-// const defaultPiecePositions = [
-//   { piece: "whiteRook", x: 0, y: 0, hasMoved: false },
-//   { piece: "whiteKnight", x: 1, y: 0 },
-//   { piece: "whiteBishop", x: 2, y: 0 },
-//   { piece: "whiteQueen", x: 3, y: 0 },
-//   { piece: "whiteKing", x: 4, y: 0, hasMoved: false },
-//   { piece: "whiteBishop", x: 5, y: 0 },
-//   { piece: "whiteKnight", x: 6, y: 0 },
-//   { piece: "whiteRook", x: 7, y: 0, hasMoved: false },
-//   { piece: "whitePawn", x: 0, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 1, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 2, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 3, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 4, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 5, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 6, y: 1, hasMoved: false },
-//   { piece: "whitePawn", x: 7, y: 1, hasMoved: false },
-//   { piece: "blackRook", x: 0, y: 7, hasMoved: false },
-//   { piece: "blackKnight", x: 1, y: 7 },
-//   { piece: "blackBishop", x: 2, y: 7 },
-//   { piece: "blackQueen", x: 3, y: 7 },
-//   { piece: "blackKing", x: 4, y: 7, hasMoved: false },
-//   { piece: "blackBishop", x: 5, y: 7 },
-//   { piece: "blackKnight", x: 6, y: 7 },
-//   { piece: "blackRook", x: 7, y: 7, hasMoved: false },
-//   { piece: "blackPawn", x: 0, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 1, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 2, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 3, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 4, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 5, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 6, y: 6, hasMoved: false },
-//   { piece: "blackPawn", x: 7, y: 6, hasMoved: false },
-// ];
-
 let defaultBoard = [
   { x: 0, y: 7, color: "white" },
   { x: 1, y: 7, color: "black" },
