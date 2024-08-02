@@ -24,7 +24,10 @@ async function connectToDatabase() {
     const database = client.db("ChessAppDataBase");
     collection = database.collection("games");
     console.log("Connected to MongoDB");
-
+    //TODO
+    //clear colletion DELTE ME LATER
+    await collection.deleteMany({});
+    //TODO
     // Start the server after the connection is established
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
