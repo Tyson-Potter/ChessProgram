@@ -14,14 +14,13 @@ import whitePawn from "/src/assets/images/white-pawn.png";
 import whiteQueen from "/src/assets/images/white-queen.png";
 import whiteRook from "/src/assets/images/white-rook.png";
 
-
 function Board(gameState) {
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
   if (gameState != false) {
     let board = gameState.gameState.board;
     let pieces = gameState.gameState.piecePostions;
-     
+
     const pieceImages = {
       blackBishop: blackBishop,
       blackKing: blackKing,
@@ -36,66 +35,73 @@ function Board(gameState) {
       whiteQueen: whiteQueen,
       whiteRook: whiteRook,
     };
-   
-const handleClick = (square,event) => {
-  // if not current players turn do nothing
-  if(gameState.gameState.currentTurn != localStorage.getItem("color")){
 
-   console.log("Not your turn");
-  }else{
-    //Check if Clicked square has a pieace on it 
-    const clickedPiece = pieces.find(obj => obj.x === square.x && obj.y === square.y);
-    let buttonElement= event.target;
-    
-    if(clickedPiece){
-      
-      console.log("they clicked"+ clickedPiece)
-      
-      //Check if they clicked thier piece or an enempy piece
-      if(clickedPiece.color===localStorage.getItem("color")){
-        //no prior Piece selcted so the current needs to be.
-        if(selectedPiece===null){
-          buttonElement.classList.add('selectedPiece');
-         setSelectedPiece(clickedPiece);
-         //trying to unselect a pieace
-          }else if(clickedPiece.x==selectedPiece.x&&clickedPiece.y==selectedPiece.y){
-            buttonElement.classList.remove('selectedPiece');
-            setSelectedPiece(null);
-          }
-      
-      }else{
-        //TODO
-        const clickedSquare = board.find(obj => obj.x === square.x && obj.y === square.y);
-        let response=move(selectedPiece,clickedSquare);
-        //set new state if is valid 
-        console.log("clicked enemy Piece")
-        //clicked an ememy Piece
-        if(selectedPiece!=null){
-          console.log("kill emenmy attack");
-          //sent api request to make a move
+    const handleClick = (square, event) => {
+      // if not current players turn do nothing
+      if (gameState.gameState.currentTurn != localStorage.getItem("color")) {
+        console.log("Not your turn");
+      } else {
+        //Check if Clicked square has a pieace on it
+        const clickedPiece = pieces.find(
+          (obj) => obj.x === square.x && obj.y === square.y
+        );
+        let buttonElement = event.target;
+
+        if (clickedPiece) {
+          console.log("they clicked" + clickedPiece);
+
+          //Check if they clicked thier piece or an enempy piece
+          if (clickedPiece.color === localStorage.getItem("color")) {
+            //no prior Piece selcted so the current needs to be.
+            if (selectedPiece === null) {
+              buttonElement.classList.add("selectedPiece");
+              setSelectedPiece(clickedPiece);
+              //trying to unselect a pieace
+            } else if (
+              clickedPiece.x == selectedPiece.x &&
+              clickedPiece.y == selectedPiece.y
+            ) {
+              buttonElement.classList.remove("selectedPiece");
+              setSelectedPiece(null);
+            }
+          } else {
+            //TODO
+            const clickedSquare = board.find(
+              (obj) => obj.x === square.x && obj.y === square.y
+            );
+            let response = move(selectedPiece, clickedSquare);
+            //set new state if is valid
+            console.log("clicked enemy Piece");
+            //clicked an ememy Piece
+            if (selectedPiece != null) {
+              console.log("kill emenmy attack");
+              //sent api request to make a move
               //reset selected Pieace and selected square
-        }else{
-          //Do Nothing
+            } else {
+              //Do Nothing
+            }
+          }
+        } else {
+          //clicked an empty square
+          if (selectedPiece != null) {
+            const clickedSquare = board.find(
+              (obj) => obj.x === square.x && obj.y === square.y
+            );
+            let response = move(
+              selectedPiece,
+              clickedSquare,
+              gameState.gameState._id
+            );
+            console.log("Make Move");
+
+            //sent api request to make a move
+            //reset selected Pieace and selected square
+          } else {
+            //Do Nothing
+          }
         }
       }
-    }else{
-      //clicked an empty square
-      if(selectedPiece!=null){
-        const clickedSquare = board.find(obj => obj.x === square.x && obj.y === square.y);
-        let response=move(selectedPiece,clickedSquare);
-        console.log("Make Move");
-        
-        //sent api request to make a move
-        //reset selected Pieace and selected square
-      }else{
-        //Do Nothing
-      }
-      
-    }
-  }
-    
-};
-    
+    };
 
     if (localStorage.getItem("color") !== "white") {
       board = [...board].reverse();
@@ -107,32 +113,31 @@ const handleClick = (square,event) => {
     };
     return (
       <>
-      <h1>You Are {localStorage.getItem("color") }</h1>
-      <div className="board-container">
-        <div className="grid">
-          {board.map((square) => (
-            <button  onClick={() => handleClick(square,event)}
-              key={`${square.x},${square.y}`}
-              id={`${square.x},${square.y}`}
-              className={`${square.color} cell`}
-            >
-              {getPieceAtPosition(square.x, square.y) ? (
-                <img
-                  src={pieceImages[getPieceAtPosition(square.x, square.y)]}
-                  alt={getPieceAtPosition(square.x, square.y)}
-                />
-              ) : null}
-            </button>
-          ))}
+        <h1>You Are {localStorage.getItem("color")}</h1>
+        <div className="board-container">
+          <div className="grid">
+            {board.map((square) => (
+              <button
+                onClick={() => handleClick(square, event)}
+                key={`${square.x},${square.y}`}
+                id={`${square.x},${square.y}`}
+                className={`${square.color} cell`}
+              >
+                {getPieceAtPosition(square.x, square.y) ? (
+                  <img
+                    src={pieceImages[getPieceAtPosition(square.x, square.y)]}
+                    alt={getPieceAtPosition(square.x, square.y)}
+                  />
+                ) : null}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
       </>
     );
-    
   }
-  
 }
-async function move(pieaceToMove,squareToMoveTo) {
+async function move(pieaceToMove, squareToMoveTo, gameId) {
   const response = await fetch("http://localhost:3000/move", {
     method: "PUT",
     headers: {
@@ -140,9 +145,9 @@ async function move(pieaceToMove,squareToMoveTo) {
     },
     body: JSON.stringify({
       pieaceToMove: pieaceToMove,
-      playerColor:localStorage.getItem("color"),
-      squareToMoveTo:squareToMoveTo,
-
+      playerColor: localStorage.getItem("color"),
+      squareToMoveTo: squareToMoveTo,
+      gameId: gameId,
     }),
   });
 
@@ -156,5 +161,3 @@ async function move(pieaceToMove,squareToMoveTo) {
   return result;
 }
 export default Board;
-
-

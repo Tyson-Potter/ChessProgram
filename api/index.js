@@ -26,7 +26,7 @@ async function connectToDatabase() {
     console.log("Connected to MongoDB");
     //TODO
     //clear colletion DELTE ME LATER
-    await collection.deleteMany({});
+    // await collection.deleteMany({});
     //TODO
     // Start the server after the connection is established
     app.listen(port, () => {
@@ -50,6 +50,7 @@ app.post("/createGame", async (req, res) => {
       _id: generateRandomId(),
       board: defaultBoard,
       piecePostions: defaultPiecePositions,
+      winner: null,
     };
 
     const result = await collection.insertOne(game);
@@ -59,6 +60,7 @@ app.post("/createGame", async (req, res) => {
     res.status(500).json({ error: "Failed to insert document" });
   }
 });
+
 app.put("/joinGame", async (req, res) => {
   const gameId = req.body.id;
   console.log("gameId", gameId);
@@ -98,15 +100,47 @@ app.get("/getGames", async (req, res) => {
     res.status(500).json({ error: "Failed to insert document" });
   }
 });
+
 //TODO
 app.put("/move", async (req, res) => {
   try {
-    console.log("req.body ", req.body);
+    let gameId = req.body.gameId;
+    let pieaceToMove = req.body.pieaceToMove;
+    let playerColor = req.body.playerColor;
+    let squareToMoveTo = req.body.squareToMoveTo;
+
+    const game = await collection.findOne({ _id: gameId });
+
+    if (game.currentTurn != playerColor || game.gameStatus != "active") {
+      res.status(500).json({ error: "Not Your Turn" });
+    }
+
+    let newGameState = movePiece(
+      pieaceToMove,
+      squareToMoveTo,
+      playerColor,
+      game
+    );
+
+    if (newGameState != null) {
+      //TODO
+      //Check if Game is Over
+      const result = await collection.updateOne(
+        { _id: gameId },
+        {
+          $set: {
+            piecePositions: newGameState.piecePositions,
+            currentTurn: newGameState.currentTurn,
+          },
+        }
+      );
+    }
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Failed to insert document" });
+    res.status(500).json({ error: "Failed to move Piece" });
   }
 });
+
 //Functions
 function generateRandomId() {
   let length = 20;
@@ -120,41 +154,261 @@ function generateRandomId() {
   return result;
 }
 
+function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
+  let gameState;
+  switch (pieceToMove.type) {
+    case "rook":
+      gameState = moveRook(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    case "knight":
+      gameState = moveKnight(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    case "bishop":
+      gameState = moveBishop(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    case "queen":
+      gameState = moveQueen(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    case "king":
+      gameState = moveKing(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    case "pawn":
+      gameState = movePawn(pieceToMove, squareToMoveTo, playerColor, game);
+      if (gameState != null) {
+        return gameState;
+      } else {
+        return null;
+      }
+    default:
+      console.log("Unknown piece type");
+      return null;
+  }
+}
+
+//TODO
+function checkForCheckMate() {}
+//TODO
+function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function moveBishop(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {}
 //Defualt Variables
 const defaultPiecePositions = [
-  { piece: "whiteRook", x: 0, y: 0, hasMoved: false, color: "white" },
-  { piece: "whiteKnight", x: 1, y: 0, color: "white" },
-  { piece: "whiteBishop", x: 2, y: 0, color: "white" },
-  { piece: "whiteQueen", x: 3, y: 0, color: "white" },
-  { piece: "whiteKing", x: 4, y: 0, hasMoved: false, color: "white" },
-  { piece: "whiteBishop", x: 5, y: 0, color: "white" },
-  { piece: "whiteKnight", x: 6, y: 0, color: "white" },
-  { piece: "whiteRook", x: 7, y: 0, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 0, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 1, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 2, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 3, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 4, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 5, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 6, y: 1, hasMoved: false, color: "white" },
-  { piece: "whitePawn", x: 7, y: 1, hasMoved: false, color: "white" },
-  { piece: "blackRook", x: 0, y: 7, hasMoved: false, color: "black" },
-  { piece: "blackKnight", x: 1, y: 7, color: "black" },
-  { piece: "blackBishop", x: 2, y: 7, color: "black" },
-  { piece: "blackQueen", x: 3, y: 7, color: "black" },
-  { piece: "blackKing", x: 4, y: 7, hasMoved: false, color: "black" },
-  { piece: "blackBishop", x: 5, y: 7, color: "black" },
-  { piece: "blackKnight", x: 6, y: 7, color: "black" },
-  { piece: "blackRook", x: 7, y: 7, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 0, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 1, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 2, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 3, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 4, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 5, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 6, y: 6, hasMoved: false, color: "black" },
-  { piece: "blackPawn", x: 7, y: 6, hasMoved: false, color: "black" },
+  {
+    piece: "whiteRook",
+    type: "rook",
+    x: 0,
+    y: 0,
+    hasMoved: false,
+    color: "white",
+  },
+  { piece: "whiteKnight", type: "knight", x: 1, y: 0, color: "white" },
+  { piece: "whiteBishop", type: "bishop", x: 2, y: 0, color: "white" },
+  { piece: "whiteQueen", type: "queen", x: 3, y: 0, color: "white" },
+  {
+    piece: "whiteKing",
+    type: "king",
+    x: 4,
+    y: 0,
+    hasMoved: false,
+    color: "white",
+  },
+  { piece: "whiteBishop", type: "bishop", x: 5, y: 0, color: "white" },
+  { piece: "whiteKnight", type: "knight", x: 6, y: 0, color: "white" },
+  {
+    piece: "whiteRook",
+    type: "rook",
+    x: 7,
+    y: 0,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 0,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 1,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 2,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 3,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 4,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 5,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 6,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "whitePawn",
+    type: "pawn",
+    x: 7,
+    y: 1,
+    hasMoved: false,
+    color: "white",
+  },
+  {
+    piece: "blackRook",
+    type: "rook",
+    x: 0,
+    y: 7,
+    hasMoved: false,
+    color: "black",
+  },
+  { piece: "blackKnight", type: "knight", x: 1, y: 7, color: "black" },
+  { piece: "blackBishop", type: "bishop", x: 2, y: 7, color: "black" },
+  { piece: "blackQueen", type: "queen", x: 3, y: 7, color: "black" },
+  {
+    piece: "blackKing",
+    type: "king",
+    x: 4,
+    y: 7,
+    hasMoved: false,
+    color: "black",
+  },
+  { piece: "blackBishop", type: "bishop", x: 5, y: 7, color: "black" },
+  { piece: "blackKnight", type: "knight", x: 6, y: 7, color: "black" },
+  {
+    piece: "blackRook",
+    type: "rook",
+    x: 7,
+    y: 7,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 0,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 1,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 2,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 3,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 4,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 5,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 6,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
+  {
+    piece: "blackPawn",
+    type: "pawn",
+    x: 7,
+    y: 6,
+    hasMoved: false,
+    color: "black",
+  },
 ];
+
 let defaultBoard = [
   { x: 0, y: 7, color: "white" },
   { x: 1, y: 7, color: "black" },
