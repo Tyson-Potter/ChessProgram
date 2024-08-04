@@ -49,7 +49,7 @@ app.post("/createGame", async (req, res) => {
       gameStatus: "pending",
       _id: generateRandomId(),
       board: defaultBoard,
-      piecePostions: defaultPiecePositions,
+      piecePositions: defaultPiecePositions,
       winner: null,
     };
 
@@ -155,6 +155,7 @@ function generateRandomId() {
 }
 
 function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
+  console.log("Moving Piece");
   let gameState;
   switch (pieceToMove.type) {
     case "rook":
@@ -208,7 +209,140 @@ function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
 //TODO
 function checkForCheckMate() {}
 //TODO
-function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {}
+function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
+  console.log("Moving Rook");
+  //Check if the piece is moving in a straight line
+  if (pieceToMove.x != squareToMoveTo.x && pieceToMove.y != squareToMoveTo.y) {
+    return null;
+  } else if (pieceToMove.x != squareToMoveTo.x) {
+    //moving on the x axis to the left
+    if (pieceToMove.x > squareToMoveTo.x) {
+      let pointsArray = [];
+      for (let i = squareToMoveTo.x + 1; i < pieceToMove.x; i++) {
+        pointsArray.push({ x: i, y: pieceToMove.y });
+      }
+
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            console.log(
+              point.x +
+                " " +
+                point.y +
+                "// " +
+                game.piecePositions[i].x +
+                " " +
+                game.piecePositions[i].y
+            );
+            console.log("Piece in the way");
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      //todo all logic to check if king will be in check if we move after this
+      console.log("No piece in the way");
+      return null;
+    } else if (pieceToMove.x < squareToMoveTo.x) {
+      let pointsArray = [];
+      for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
+        pointsArray.push({ x: i, y: pieceToMove.y });
+      }
+
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            console.log(
+              point.x +
+                " " +
+                point.y +
+                "// " +
+                game.piecePositions[i].x +
+                " " +
+                game.piecePositions[i].y
+            );
+            console.log("Piece in the way");
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      //todo all logic to check if king will be in check if we move after this
+      console.log("No piece in the way");
+      return null;
+    }
+  } else if (pieceToMove.y != squareToMoveTo.y) {
+    //
+    if (pieceToMove.y > squareToMoveTo.y) {
+      let pointsArray = [];
+      for (let i = squareToMoveTo.y + 1; i < pieceToMove.y; i++) {
+        pointsArray.push({ x: pieceToMove.x, y: i });
+      }
+
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            console.log(
+              point.x +
+                " " +
+                point.y +
+                "// " +
+                game.piecePositions[i].x +
+                " " +
+                game.piecePositions[i].y
+            );
+            console.log("Piece in the way");
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      //todo all logic to check if king will be in check if we move after this
+      console.log("No piece in the way");
+      return null;
+    } else if (pieceToMove.y < squareToMoveTo.y) {
+      let pointsArray = [];
+      for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
+        pointsArray.push({ x: pieceToMove.x, y: i });
+      }
+
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            console.log(
+              point.x +
+                " " +
+                point.y +
+                "// " +
+                game.piecePositions[i].x +
+                " " +
+                game.piecePositions[i].y
+            );
+            console.log("Piece in the way");
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      //todo all logic to check if king will be in check if we move after this
+      console.log("No piece in the way");
+      return null;
+    }
+    /////////////////////////////////
+    //moving on the y axis
+  } else {
+    //piece is not moving
+    return null;
+  }
+}
 //TODO
 function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {}
 //TODO

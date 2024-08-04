@@ -19,7 +19,7 @@ function Board(gameState) {
   const [selectedSquare, setSelectedSquare] = useState(null);
   if (gameState != false) {
     let board = gameState.gameState.board;
-    let pieces = gameState.gameState.piecePostions;
+    let pieces = gameState.gameState.piecePositions;
 
     const pieceImages = {
       blackBishop: blackBishop,
@@ -36,7 +36,7 @@ function Board(gameState) {
       whiteRook: whiteRook,
     };
 
-    const handleClick = (square, event) => {
+    const handleClick = async (square, event) => {
       // if not current players turn do nothing
       if (gameState.gameState.currentTurn != localStorage.getItem("color")) {
         console.log("Not your turn");
@@ -69,13 +69,21 @@ function Board(gameState) {
             const clickedSquare = board.find(
               (obj) => obj.x === square.x && obj.y === square.y
             );
-            let response = move(selectedPiece, clickedSquare);
+            let response = await move(
+              selectedPiece,
+              clickedSquare,
+              localStorage.getItem("gameId")
+            );
             //set new state if is valid
             console.log("clicked enemy Piece");
             //clicked an ememy Piece
             if (selectedPiece != null) {
               console.log("kill emenmy attack");
-              //sent api request to make a move
+              let response = await move(
+                selectedPiece,
+                clickedSquare,
+                localStorage.getItem("gameId")
+              );
               //reset selected Pieace and selected square
             } else {
               //Do Nothing
