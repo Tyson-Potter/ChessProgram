@@ -5,7 +5,9 @@ import Lobby from "./components/Lobby/Lobby";
 import Alert from "./components/Alert/Alert";
 function App() {
   const [gameState, setGameState] = useState(false);
-  const [playerName, setPlayerName] = useState(localStorage.getItem("playerName"));
+  const [playerName, setPlayerName] = useState(
+    localStorage.getItem("playerName")
+  );
   return (
     <>
       {playerName ? (

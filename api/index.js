@@ -60,6 +60,28 @@ app.post("/createGame", async (req, res) => {
     res.status(500).json({ error: "Failed to insert document" });
   }
 });
+app.put("/getGameState", async (req, res) => {
+  try {
+    let gameId = req.body.gameId;
+    let color = req.body.playerColor;
+    console.log("gameId", gameId);
+    // Fetch the game state from the database
+    const game = await collection.findOne({ _id: gameId });
+
+    // If the game is not found, respond with a 404 error
+
+    // Reverse the board if the player is not white
+    if (color !== "white") {
+      game.board.reverse();
+    }
+
+    // Send the game state as a response
+    res.status(200).json(game);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to process the request" });
+  }
+});
 
 app.put("/joinGame", async (req, res) => {
   const gameId = req.body.id;
@@ -115,7 +137,7 @@ app.put("/move", async (req, res) => {
       res.status(500).json({ error: "Not Your Turn" });
     }
 
-    let newGameState = movePiece(
+    let newGameState = await movePiece(
       pieaceToMove,
       squareToMoveTo,
       playerColor,
@@ -123,6 +145,9 @@ app.put("/move", async (req, res) => {
     );
 
     if (newGameState != null) {
+      //trunary to chagne current turn to other
+      newGameState.currentTurn =
+        newGameState.currentTurn === "white" ? "black" : "white";
       //TODO
       //Check if Game is Over
       const result = await collection.updateOne(
@@ -134,6 +159,8 @@ app.put("/move", async (req, res) => {
           },
         }
       );
+      console.log(newGameState);
+      res.status(200).json(newGameState);
     }
   } catch (error) {
     console.error(error);
@@ -154,12 +181,18 @@ function generateRandomId() {
   return result;
 }
 
-function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
+async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
   console.log("Moving Piece");
   let gameState;
   switch (pieceToMove.type) {
     case "rook":
-      gameState = moveRook(pieceToMove, squareToMoveTo, playerColor, game);
+      gameState = await moveRook(
+        pieceToMove,
+        squareToMoveTo,
+        playerColor,
+        game
+      );
+      console.log(gameState) + " rooked moved";
       if (gameState != null) {
         return gameState;
       } else {
@@ -208,7 +241,10 @@ function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
 
 //TODO
 function checkForCheckMate() {}
-//TODO
+function checkLegalGameState() {
+  return true;
+}
+//checks if a rook can move to a square based on if there are any picess in the way
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
   console.log("Moving Rook");
   //Check if the piece is moving in a straight line
@@ -242,9 +278,13 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
           }
         }
       }
+
       //todo all logic to check if king will be in check if we move after this
-      console.log("No piece in the way");
-      return null;
+      console.log("No piece in the way"); //////////////////
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
     } else if (pieceToMove.x < squareToMoveTo.x) {
       let pointsArray = [];
       for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
@@ -266,14 +306,23 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
                 " " +
                 game.piecePositions[i].y
             );
-            console.log("Piece in the way");
-            return null; // Exit if a piece is found in the way
+            let returnGameState = updateGameState(
+              game,
+              pieceToMove,
+              squareToMoveTo
+            );
+            if (returnGameState != null) {
+              return returnGameState;
+            }
           }
         }
       }
       //todo all logic to check if king will be in check if we move after this
       console.log("No piece in the way");
-      return null;
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
     }
   } else if (pieceToMove.y != squareToMoveTo.y) {
     //
@@ -298,14 +347,14 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
                 " " +
                 game.piecePositions[i].y
             );
-            console.log("Piece in the way");
-            return null; // Exit if a piece is found in the way
           }
         }
       }
       //todo all logic to check if king will be in check if we move after this
-      console.log("No piece in the way");
-      return null;
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
     } else if (pieceToMove.y < squareToMoveTo.y) {
       let pointsArray = [];
       for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
@@ -318,31 +367,47 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
             game.piecePositions[i].x == point.x &&
             game.piecePositions[i].y == point.y
           ) {
-            console.log(
-              point.x +
-                " " +
-                point.y +
-                "// " +
-                game.piecePositions[i].x +
-                " " +
-                game.piecePositions[i].y
-            );
             console.log("Piece in the way");
             return null; // Exit if a piece is found in the way
           }
         }
       }
       //todo all logic to check if king will be in check if we move after this
-      console.log("No piece in the way");
-      return null;
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
     }
-    /////////////////////////////////
-    //moving on the y axis
   } else {
-    //piece is not moving
+    console.log("Invalid Move");
     return null;
   }
 }
+function updateGameState(game, pieceToMove, squareToMoveTo) {
+  let legalGameState = checkLegalGameState();
+
+  if (legalGameState) {
+    // Remove any piece that is on the target square or the current piece's position
+    game.piecePositions = game.piecePositions.filter((position) => {
+      return !(
+        (position.x === squareToMoveTo.x && position.y === squareToMoveTo.y) ||
+        (position.x === pieceToMove.x && position.y === pieceToMove.y)
+      );
+    });
+
+    // Update the piece's position
+    pieceToMove.x = squareToMoveTo.x;
+    pieceToMove.y = squareToMoveTo.y;
+
+    // Add the moved piece to the game state
+    game.piecePositions.push(pieceToMove);
+
+    return game;
+  } else {
+    return null;
+  }
+}
+
 //TODO
 function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {}
 //TODO

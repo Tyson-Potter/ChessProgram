@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import "../Board/board.css";
 import blackBishop from "/src/assets/images/black-bishop.png";
 import blackKing from "/src/assets/images/black-king.png";
@@ -14,12 +15,32 @@ import whitePawn from "/src/assets/images/white-pawn.png";
 import whiteQueen from "/src/assets/images/white-queen.png";
 import whiteRook from "/src/assets/images/white-rook.png";
 
-function Board(gameState) {
+function Board({ gameState, setGameState }) {
+  // const getCurrentGameState = useCallback(async () => {
+  //   try {
+  //     const gamesData = await getGameState(localStorage.getItem("gameId"));
+  //     setGameState(gamesData);
+  //   } catch (error) {
+  //     console.error("Error fetching games:", error);
+  //   }
+  // }, [gameState]);
+
+  // useEffect(() => {
+  //   getCurrentGameState();
+
+  //   const intervalId = setInterval(getCurrentGameState, 2000);
+
+  //   return () => {
+  //     clearInterval(intervalId);
+  //   };
+  // }, [getCurrentGameState]);
+
+  // useEffect(() => {}, [gameState]);
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
   if (gameState != false) {
-    let board = gameState.gameState.board;
-    let pieces = gameState.gameState.piecePositions;
+    let board = gameState.board;
+    let pieces = gameState.piecePositions;
 
     const pieceImages = {
       blackBishop: blackBishop,
@@ -38,7 +59,7 @@ function Board(gameState) {
 
     const handleClick = async (square, event) => {
       // if not current players turn do nothing
-      if (gameState.gameState.currentTurn != localStorage.getItem("color")) {
+      if (gameState.currentTurn != localStorage.getItem("color")) {
         console.log("Not your turn");
       } else {
         //Check if Clicked square has a pieace on it
@@ -65,29 +86,16 @@ function Board(gameState) {
               setSelectedPiece(null);
             }
           } else {
-            //TODO
-            const clickedSquare = board.find(
+            const clickedSquare = pieces.find(
               (obj) => obj.x === square.x && obj.y === square.y
             );
             let response = await move(
               selectedPiece,
               clickedSquare,
-              localStorage.getItem("gameId")
+              gameState._id
             );
-            //set new state if is valid
-            console.log("clicked enemy Piece");
-            //clicked an ememy Piece
-            if (selectedPiece != null) {
-              console.log("kill emenmy attack");
-              let response = await move(
-                selectedPiece,
-                clickedSquare,
-                localStorage.getItem("gameId")
-              );
-              //reset selected Pieace and selected square
-            } else {
-              //Do Nothing
-            }
+            gameState.piecePositions = response.piecePositions;
+            setSelectedPiece(null);
           }
         } else {
           //clicked an empty square
@@ -95,15 +103,13 @@ function Board(gameState) {
             const clickedSquare = board.find(
               (obj) => obj.x === square.x && obj.y === square.y
             );
-            let response = move(
+            let response = await move(
               selectedPiece,
               clickedSquare,
-              gameState.gameState._id
+              gameState._id
             );
-            console.log("Make Move");
-
-            //sent api request to make a move
-            //reset selected Pieace and selected square
+            gameState.piecePositions = response.piecePositions;
+            setSelectedPiece(null);
           } else {
             //Do Nothing
           }
@@ -169,3 +175,27 @@ async function move(pieaceToMove, squareToMoveTo, gameId) {
   return result;
 }
 export default Board;
+async function getGameState(gameId, pieceToMove, squareToMoveTo) {
+  const response = await fetch("http://localhost:3000/getGameState", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      gameId: gameId,
+      playerColor: localStorage.getItem("color"),
+    }),
+  });
+
+  if (!response.ok) {
+    const errorMessage = await response.text();
+    throw new Error(`Failed to fetch game state: ${errorMessage}`);
+  }
+
+  try {
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    throw new Error("Failed to parse JSON response");
+  }
+}
