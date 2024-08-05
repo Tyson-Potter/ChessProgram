@@ -434,7 +434,14 @@ function updateGameState(game, pieceToMove, squareToMoveTo) {
     pieceToMove.x = squareToMoveTo.x;
     pieceToMove.y = squareToMoveTo.y;
 
-    // Add the moved piece to the game state
+    // Check if the piece is a pawn, rook, or king and update the hasMoved property
+    if (
+      pieceToMove.type === "pawn" ||
+      pieceToMove.type === "rook" ||
+      pieceToMove.type === "king"
+    ) {
+      pieceToMove.hasMoved = true;
+    }
     game.piecePositions.push(pieceToMove);
 
     return game;
