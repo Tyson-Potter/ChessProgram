@@ -2,7 +2,6 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const dotenv = require("dotenv");
-
 require("dotenv").config();
 
 const { MongoClient, ObjectId } = require("mongodb");
@@ -186,8 +185,15 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
       } else {
         return null;
       }
+
     case "knight":
-      gameState = moveKnight(pieceToMove, squareToMoveTo, playerColor, game);
+      gameState = await moveKnight(
+        pieceToMove,
+        squareToMoveTo,
+        playerColor,
+        game
+      );
+
       if (gameState != null) {
         return gameState;
       } else {
@@ -348,6 +354,70 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
     return null;
   }
 }
+
+//TODO
+function moveBishop(pieceToMove, squareToMoveTo, playerColor, game) {
+  const slope =
+    (squareToMoveTo.y - pieceToMove.y) / (squareToMoveTo.x - pieceToMove.x);
+  //check if the slope is a diagonal
+  if (slope != 1 && slope != -1) {
+    return null;
+  } else {
+    //moving to the right and up
+    if (pieceToMove.x < squareToMoveTo.x && pieceToMove.y < squareToMoveTo.y) {
+      //moving left and down
+    } else if (
+      pieceToMove.x > squareToMoveTo.x &&
+      pieceToMove.y > squareToMoveTo.y
+    ) {
+      //
+    } else if (
+      pieceToMove.x > squareToMoveTo.x &&
+      pieceToMove.y < squareToMoveTo.y
+    ) {
+    } else if (
+      pieceToMove.x < squareToMoveTo.x &&
+      pieceToMove.y > squareToMoveTo.y
+    ) {
+    }
+  }
+}
+
+function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
+  const possibleMoves = [
+    { x: pieceToMove.x + 2, y: pieceToMove.y + 1 },
+    { x: pieceToMove.x + 2, y: pieceToMove.y - 1 },
+    { x: pieceToMove.x - 2, y: pieceToMove.y + 1 },
+    { x: pieceToMove.x - 2, y: pieceToMove.y - 1 },
+    { x: pieceToMove.x + 1, y: pieceToMove.y + 2 },
+    { x: pieceToMove.x + 1, y: pieceToMove.y - 2 },
+    { x: pieceToMove.x - 1, y: pieceToMove.y + 2 },
+    { x: pieceToMove.x - 1, y: pieceToMove.y - 2 },
+  ];
+
+  for (let i = 0; i < possibleMoves.length; i++) {
+    const move = possibleMoves[i];
+
+    if (move.x === squareToMoveTo.x && move.y === squareToMoveTo.y) {
+      console.log("Square matches a possible knight move!");
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
+    }
+  }
+
+  //no valid move
+  return null;
+}
+
+//TODO
+function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {}
+//TODO
+function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {}
+
 function updateGameState(game, pieceToMove, squareToMoveTo) {
   let legalGameState = checkLegalGameState();
 
@@ -372,24 +442,13 @@ function updateGameState(game, pieceToMove, squareToMoveTo) {
     return null;
   }
 }
-
-//TODO
-function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {}
-//TODO
-function moveBishop(pieceToMove, squareToMoveTo, playerColor, game) {}
-//TODO
-function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {}
-//TODO
-function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {}
-//TODO
-function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {}
 //Defualt Variables
 const defaultPiecePositions = [
   {
     piece: "whiteRook",
     type: "rook",
     x: 0,
-    y: 0,
+    y: 3,
     hasMoved: false,
     color: "white",
   },
@@ -503,7 +562,7 @@ const defaultPiecePositions = [
     piece: "blackRook",
     type: "rook",
     x: 7,
-    y: 7,
+    y: 3,
     hasMoved: false,
     color: "black",
   },

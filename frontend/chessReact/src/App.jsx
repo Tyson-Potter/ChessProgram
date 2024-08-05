@@ -28,7 +28,7 @@ function App() {
     fetchGameState();
 
     // Set interval to fetch game state every 5 seconds
-    const intervalId = setInterval(fetchGameState, 5000);
+    const intervalId = setInterval(fetchGameState, 2000);
 
     // Clear the interval when the component unmounts
     return () => {
