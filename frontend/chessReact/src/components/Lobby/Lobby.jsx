@@ -6,15 +6,17 @@ function Lobby({ setGameState, gameState }) {
 
   async function handleCreateGame(setGameState) {
     let response = await createGame();
-    localStorage.setItem("gameId", response._id);
+   
+    localStorage.setItem("gameId", response.game._id);
     localStorage.setItem("color", "white");
     setGameState(response.game);
+    
   }
   async function handleJoinGame(gameId) {
     let response = await joinGame(gameId);
     localStorage.setItem("gameId", response._id);
     localStorage.setItem("color", "black");
-  
+    console.log(response._id);
     setGameState(response);
   }
   return (

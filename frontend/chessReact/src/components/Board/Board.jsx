@@ -16,28 +16,14 @@ import whiteQueen from "/src/assets/images/white-queen.png";
 import whiteRook from "/src/assets/images/white-rook.png";
 
 function Board({ gameState, setGameState }) {
-  // const getCurrentGameState = useCallback(async () => {
-  //   try {
-  //     const gamesData = await getGameState(localStorage.getItem("gameId"));
-  //     setGameState(gamesData);
-  //   } catch (error) {
-  //     console.error("Error fetching games:", error);
-  //   }
-  // }, [gameState]);
-
-  // useEffect(() => {
-  //   getCurrentGameState();
-
-  //   const intervalId = setInterval(getCurrentGameState, 2000);
-
-  //   return () => {
-  //     clearInterval(intervalId);
-  //   };
-  // }, [getCurrentGameState]);
-
-  // useEffect(() => {}, [gameState]);
+ 
   const [selectedPiece, setSelectedPiece] = useState(null);
   const [selectedSquare, setSelectedSquare] = useState(null);
+
+  
+
+  
+
   if (gameState != false) {
     let board = gameState.board;
     let pieces = gameState.piecePositions;
@@ -175,27 +161,3 @@ async function move(pieaceToMove, squareToMoveTo, gameId) {
   return result;
 }
 export default Board;
-async function getGameState(gameId, pieceToMove, squareToMoveTo) {
-  const response = await fetch("http://localhost:3000/getGameState", {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      gameId: gameId,
-      playerColor: localStorage.getItem("color"),
-    }),
-  });
-
-  if (!response.ok) {
-    const errorMessage = await response.text();
-    throw new Error(`Failed to fetch game state: ${errorMessage}`);
-  }
-
-  try {
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    throw new Error("Failed to parse JSON response");
-  }
-}

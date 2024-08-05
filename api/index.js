@@ -26,7 +26,7 @@ async function connectToDatabase() {
     console.log("Connected to MongoDB");
     //TODO
     //clear colletion DELTE ME LATER
-    // await collection.deleteMany({});
+    await collection.deleteMany({});
     //TODO
     // Start the server after the connection is established
     app.listen(port, () => {
@@ -63,17 +63,7 @@ app.post("/createGame", async (req, res) => {
 app.put("/getGameState", async (req, res) => {
   try {
     let gameId = req.body.gameId;
-    let color = req.body.playerColor;
-    console.log("gameId", gameId);
-    // Fetch the game state from the database
     const game = await collection.findOne({ _id: gameId });
-
-    // If the game is not found, respond with a 404 error
-
-    // Reverse the board if the player is not white
-    if (color !== "white") {
-      game.board.reverse();
-    }
 
     // Send the game state as a response
     res.status(200).json(game);
@@ -85,7 +75,6 @@ app.put("/getGameState", async (req, res) => {
 
 app.put("/joinGame", async (req, res) => {
   const gameId = req.body.id;
-  console.log("gameId", gameId);
   try {
     // Ensure the ID is a valid ObjectId
     const game = await collection.findOne({ _id: gameId });
@@ -159,7 +148,7 @@ app.put("/move", async (req, res) => {
           },
         }
       );
-      console.log(newGameState);
+
       res.status(200).json(newGameState);
     }
   } catch (error) {
@@ -182,7 +171,6 @@ function generateRandomId() {
 }
 
 async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
-  console.log("Moving Piece");
   let gameState;
   switch (pieceToMove.type) {
     case "rook":
@@ -192,7 +180,7 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
         playerColor,
         game
       );
-      console.log(gameState) + " rooked moved";
+
       if (gameState != null) {
         return gameState;
       } else {
@@ -246,7 +234,6 @@ function checkLegalGameState() {
 }
 //checks if a rook can move to a square based on if there are any picess in the way
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
-  console.log("Moving Rook");
   //Check if the piece is moving in a straight line
   if (pieceToMove.x != squareToMoveTo.x && pieceToMove.y != squareToMoveTo.y) {
     return null;
@@ -273,14 +260,13 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
                 " " +
                 game.piecePositions[i].y
             );
-            console.log("Piece in the way");
+
             return null; // Exit if a piece is found in the way
           }
         }
       }
 
       //todo all logic to check if king will be in check if we move after this
-      console.log("No piece in the way"); //////////////////
       let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
       if (returnGameState != null) {
         return returnGameState;
@@ -297,15 +283,6 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
             game.piecePositions[i].x == point.x &&
             game.piecePositions[i].y == point.y
           ) {
-            console.log(
-              point.x +
-                " " +
-                point.y +
-                "// " +
-                game.piecePositions[i].x +
-                " " +
-                game.piecePositions[i].y
-            );
             let returnGameState = updateGameState(
               game,
               pieceToMove,
@@ -318,7 +295,6 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
         }
       }
       //todo all logic to check if king will be in check if we move after this
-      console.log("No piece in the way");
       let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
       if (returnGameState != null) {
         return returnGameState;
@@ -338,15 +314,6 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
             game.piecePositions[i].x == point.x &&
             game.piecePositions[i].y == point.y
           ) {
-            console.log(
-              point.x +
-                " " +
-                point.y +
-                "// " +
-                game.piecePositions[i].x +
-                " " +
-                game.piecePositions[i].y
-            );
           }
         }
       }
@@ -367,7 +334,6 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
             game.piecePositions[i].x == point.x &&
             game.piecePositions[i].y == point.y
           ) {
-            console.log("Piece in the way");
             return null; // Exit if a piece is found in the way
           }
         }
@@ -379,7 +345,6 @@ function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
       }
     }
   } else {
-    console.log("Invalid Move");
     return null;
   }
 }
