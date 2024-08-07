@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 require("dotenv").config();
 
 const { MongoClient, ObjectId } = require("mongodb");
+
 const port = process.env.PORT;
 const uri = process.env.uri;
 app.use(cors());
@@ -247,110 +248,23 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
 
 //TODO
 function checkForCheckMate() {}
-function checkLegalGameState() {
+//TODO
+function checkLegalGameState(game, playerColor) {
   return true;
 }
 
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
-  //Check if the piece is moving in a straight line
-  if (pieceToMove.x != squareToMoveTo.x && pieceToMove.y != squareToMoveTo.y) {
-    return null;
-  } else if (pieceToMove.x != squareToMoveTo.x) {
-    //moving on the x axis to the left
-    if (pieceToMove.x > squareToMoveTo.x) {
-      let pointsArray = [];
-      for (let i = squareToMoveTo.x + 1; i < pieceToMove.x; i++) {
-        pointsArray.push({ x: i, y: pieceToMove.y });
-      }
-
-      for (let i = 0; i < game.piecePositions.length; i++) {
-        for (let point of pointsArray) {
-          if (
-            game.piecePositions[i].x == point.x &&
-            game.piecePositions[i].y == point.y
-          ) {
-            return null; // Exit if a piece is found in the way
-          }
-        }
-      }
-
-      //todo all logic to check if king will be in check if we move after this
-      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-      if (returnGameState != null) {
-        return returnGameState;
-      }
-    } else if (pieceToMove.x < squareToMoveTo.x) {
-      let pointsArray = [];
-      for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
-        pointsArray.push({ x: i, y: pieceToMove.y });
-      }
-
-      for (let i = 0; i < game.piecePositions.length; i++) {
-        for (let point of pointsArray) {
-          if (
-            game.piecePositions[i].x == point.x &&
-            game.piecePositions[i].y == point.y
-          ) {
-            let returnGameState = updateGameState(
-              game,
-              pieceToMove,
-              squareToMoveTo
-            );
-            if (returnGameState != null) {
-              return returnGameState;
-            }
-          }
-        }
-      }
-      //todo all logic to check if king will be in check if we move after this
-      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-      if (returnGameState != null) {
-        return returnGameState;
-      }
-    }
-  } else if (pieceToMove.y != squareToMoveTo.y) {
-    //
-    if (pieceToMove.y > squareToMoveTo.y) {
-      let pointsArray = [];
-      for (let i = squareToMoveTo.y + 1; i < pieceToMove.y; i++) {
-        pointsArray.push({ x: pieceToMove.x, y: i });
-      }
-
-      for (let i = 0; i < game.piecePositions.length; i++) {
-        for (let point of pointsArray) {
-          if (
-            game.piecePositions[i].x == point.x &&
-            game.piecePositions[i].y == point.y
-          ) {
-          }
-        }
-      }
-      //todo all logic to check if king will be in check if we move after this
-      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-      if (returnGameState != null) {
-        return returnGameState;
-      }
-    } else if (pieceToMove.y < squareToMoveTo.y) {
-      let pointsArray = [];
-      for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
-        pointsArray.push({ x: pieceToMove.x, y: i });
-      }
-
-      for (let i = 0; i < game.piecePositions.length; i++) {
-        for (let point of pointsArray) {
-          if (
-            game.piecePositions[i].x == point.x &&
-            game.piecePositions[i].y == point.y
-          ) {
-            return null; // Exit if a piece is found in the way
-          }
-        }
-      }
-      //todo all logic to check if king will be in check if we move after this
-      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-      if (returnGameState != null) {
-        return returnGameState;
-      }
+  let pieceNotInWay = checkForPiecesInWay(
+    pieceToMove,
+    squareToMoveTo,
+    playerColor,
+    game
+  );
+  if (pieceNotInWay) {
+    let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+    let isLegalGameState = checkLegalGameState(potentialGameState, playerColor);
+    if (isLegalGameState) {
+      return potentialGameState;
     }
   } else {
     return null;
@@ -512,7 +426,6 @@ function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
   return null;
 }
 
-//TODO
 async function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {
   gameState = await moveRook(pieceToMove, squareToMoveTo, playerColor, game);
 
@@ -530,38 +443,333 @@ async function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {
 //TODO
 function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {}
 //TODO
-function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {}
-
-function updateGameState(game, pieceToMove, squareToMoveTo) {
-  let legalGameState = checkLegalGameState();
-
-  if (legalGameState) {
-    // Remove any piece that is on the target square or the current piece's position
-    game.piecePositions = game.piecePositions.filter((position) => {
-      return !(
-        (position.x === squareToMoveTo.x && position.y === squareToMoveTo.y) ||
-        (position.x === pieceToMove.x && position.y === pieceToMove.y)
-      );
-    });
-
-    // Update the piece's position
-    pieceToMove.x = squareToMoveTo.x;
-    pieceToMove.y = squareToMoveTo.y;
-
-    // Check if the piece is a pawn, rook, or king and update the hasMoved property
-    if (
-      pieceToMove.type === "pawn" ||
-      pieceToMove.type === "rook" ||
-      pieceToMove.type === "king"
+function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {
+  if (pieceToMove.color === "white") {
+    // check if pawn is moving backwards
+    if (pieceToMove.y > squareToMoveTo.y) {
+      return null;
+      //check if moving to far to the left or right
+    } else if (Math.abs(pieceToMove.x - squareToMoveTo.x) > 1) {
+      return null;
+      //check if pawn is trying to move more then 2 square forward
+    } else if (
+      squareToMoveTo.y - pieceToMove.y > 2 ||
+      squareToMoveTo.y - pieceToMove.y < 1
     ) {
-      pieceToMove.hasMoved = true;
-    }
-    game.piecePositions.push(pieceToMove);
+      return null;
+      //check if pawn is trying to move 2 squares forward more then once
+    } else if (squareToMoveTo.y - pieceToMove.y == 2) {
+      if (pieceToMove.hasMoved == true) {
+        return null;
+        //check if peices are in the way of the pawn
+      } else {
+        let pointsArray = [
+          { x: pieceToMove.x, y: pieceToMove.y + 1 },
+          { x: pieceToMove.x, y: pieceToMove.y + 2 },
+        ];
+        for (let i = 0; i < game.piecePositions.length; i++) {
+          for (let point of pointsArray) {
+            if (
+              game.piecePositions[i].x == point.x &&
+              game.piecePositions[i].y == point.y
+            ) {
+              return null; // Exit if a piece is found in the way
+            }
+          }
+        }
 
-    return game;
+        let returnGameState = updateGameState(
+          game,
+          pieceToMove,
+          squareToMoveTo
+        );
+        if (returnGameState != null) {
+          return returnGameState;
+        }
+        // no Piece in the way so we can move the pawn
+      }
+    } else if (squareToMoveTo.y - pieceToMove.y == 1) {
+      let pointsArray = [{ x: pieceToMove.x, y: pieceToMove.y + 1 }];
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      if (squareToMoveTo.y == 7) {
+        pieceToMove.type = "queen";
+        pieceToMove.piece = "whiteQueen";
+      }
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
+      //attacking diagonally
+    } else if (
+      pieceToMove.y + 1 == squareToMoveTo.y &&
+      pieceToMove.x + 1 == squareToMoveTo.x
+    ) {
+      console.log("attacking diagonally");
+      //check to make sure an enemmy piece is on the square
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        if (
+          game.piecePositions[i].color != pieceToMove.color &&
+          game.piecePositions[i].x == squareToMoveTo.x &&
+          game.piecePositions[i].y == squareToMoveTo.y
+        ) {
+          if (squareToMoveTo.y == 7) {
+            pieceToMove.type = "queen";
+            pieceToMove.piece = "whiteQueen";
+          }
+          let returnGameState = updateGameState(
+            game,
+            pieceToMove,
+            squareToMoveTo
+          );
+          if (returnGameState != null) {
+            return returnGameState;
+          }
+        }
+      }
+      //return null if no enemy piece is on the square
+      return null;
+    }
+
+    //is black
   } else {
-    return null;
+    // check if pawn is moving backwards
+    if (pieceToMove.y < squareToMoveTo.y) {
+      console.log("cant move backwards");
+      return null;
+      //check if moving to far to the left or right
+    } else if (Math.abs(pieceToMove.x - squareToMoveTo.x) > 1) {
+      console.log("cant move to far left or right");
+      return null;
+      //check if pawn is trying to move more then 2 square forward
+    } else if (squareToMoveTo.y < pieceToMove.y - 2) {
+      console.log("moving more then 2 squares");
+      return null;
+      //check if pawn is trying to move 2 squares forward more then once
+    } else if (pieceToMove.y - squareToMoveTo.y == 2) {
+      console.log("moving 2 squares");
+      if (pieceToMove.hasMoved == true) {
+        return null;
+        //check if peices are in the way of the pawn
+      } else {
+        let pointsArray = [
+          { x: pieceToMove.x, y: pieceToMove.y - 1 },
+          { x: pieceToMove.x, y: pieceToMove.y - 2 },
+        ];
+
+        for (let i = 0; i < game.piecePositions.length; i++) {
+          for (let point of pointsArray) {
+            if (
+              game.piecePositions[i].x == point.x &&
+              game.piecePositions[i].y == point.y
+            ) {
+              console.log("piece in way");
+              return null; // Exit if a piece is found in the way
+            }
+          }
+        }
+        let returnGameState = updateGameState(
+          game,
+          pieceToMove,
+          squareToMoveTo
+        );
+        if (returnGameState != null) {
+          return returnGameState;
+        }
+        // no Piece in the way so we can move the pawn
+      }
+    } else if (pieceToMove.y - squareToMoveTo.y == 1) {
+      console.log("moving 1 square");
+      let pointsArray = [{ x: pieceToMove.x, y: pieceToMove.y - 1 }];
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        for (let point of pointsArray) {
+          if (
+            game.piecePositions[i].x == point.x &&
+            game.piecePositions[i].y == point.y
+          ) {
+            return null; // Exit if a piece is found in the way
+          }
+        }
+      }
+      if (squareToMoveTo.y == 0) {
+        pieceToMove.type = "queen";
+        pieceToMove.piece = "blackQueen";
+      }
+      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+      if (returnGameState != null) {
+        return returnGameState;
+      }
+      //attacking diagonally
+    } else if (
+      pieceToMove.y - 1 == squareToMoveTo.y &&
+      pieceToMove.x - 1 == squareToMoveTo.x
+    ) {
+      //check to make sure an enemmy piece is on the square
+      for (let i = 0; i < game.piecePositions.length; i++) {
+        if (
+          game.piecePositions[i].color != pieceToMove.color &&
+          game.piecePositions[i].x == squareToMoveTo.x &&
+          game.piecePositions[i].y == squareToMoveTo.y
+        ) {
+          console.log("attacking diagonally and promoting to queen");
+          if (squareToMoveTo.y === 0) {
+            pieceToMove.type = "queen";
+            pieceToMove.piece = "blackQueen";
+          }
+          let returnGameState = updateGameState(
+            game,
+            pieceToMove,
+            squareToMoveTo
+          );
+          if (returnGameState != null) {
+            return returnGameState;
+          }
+        }
+      }
+      //return null if no enemy piece is on the square
+      return null;
+    }
   }
+}
+function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
+  switch (pieceToMove.type) {
+    case "bishop":
+
+    case "rook":
+      //Check if the piece is moving in a straight line
+      if (
+        pieceToMove.x != squareToMoveTo.x &&
+        pieceToMove.y != squareToMoveTo.y
+      ) {
+        return null;
+      } else if (pieceToMove.x != squareToMoveTo.x) {
+        //moving on the x axis to the left
+        if (pieceToMove.x > squareToMoveTo.x) {
+          let pointsArray = [];
+          for (let i = squareToMoveTo.x + 1; i < pieceToMove.x; i++) {
+            pointsArray.push({ x: i, y: pieceToMove.y });
+          }
+
+          for (let i = 0; i < game.piecePositions.length; i++) {
+            for (let point of pointsArray) {
+              if (
+                game.piecePositions[i].x == point.x &&
+                game.piecePositions[i].y == point.y
+              ) {
+                return null; // Exit if a piece is found in the way
+              }
+            }
+          }
+          return true;
+        } else if (pieceToMove.x < squareToMoveTo.x) {
+          let pointsArray = [];
+          for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
+            pointsArray.push({ x: i, y: pieceToMove.y });
+          }
+
+          for (let i = 0; i < game.piecePositions.length; i++) {
+            for (let point of pointsArray) {
+              if (
+                game.piecePositions[i].x == point.x &&
+                game.piecePositions[i].y == point.y
+              ) {
+                let returnGameState = updateGameState(
+                  game,
+                  pieceToMove,
+                  squareToMoveTo
+                );
+                if (returnGameState != null) {
+                  return returnGameState;
+                }
+              }
+            }
+          }
+
+          return true;
+        }
+      } else if (pieceToMove.y != squareToMoveTo.y) {
+        //
+        if (pieceToMove.y > squareToMoveTo.y) {
+          let pointsArray = [];
+          for (let i = squareToMoveTo.y + 1; i < pieceToMove.y; i++) {
+            pointsArray.push({ x: pieceToMove.x, y: i });
+          }
+
+          for (let i = 0; i < game.piecePositions.length; i++) {
+            for (let point of pointsArray) {
+              if (
+                game.piecePositions[i].x == point.x &&
+                game.piecePositions[i].y == point.y
+              ) {
+              }
+            }
+          }
+          return true;
+        } else if (pieceToMove.y < squareToMoveTo.y) {
+          let pointsArray = [];
+          for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
+            pointsArray.push({ x: pieceToMove.x, y:. i });
+          }
+
+          for (let i = 0; i < game.piecePositions.length; i++) {
+            for (let point of pointsArray) {
+              if (
+                game.piecePositions[i].x == point.x &&
+                game.piecePositions[i].y == point.y
+              ) {
+                return null; // Exit if a piece is found in the way
+              }
+            }
+          }
+
+          return true;
+        }
+      } else {
+        return null;
+      }
+    case "knight":
+
+    case "queen":
+
+    case "king":
+
+    case "pawn":
+
+    default:
+      return null;
+  }
+}
+function updateGameState(game, pieceToMove, squareToMoveTo) {
+  game.piecePositions = game.piecePositions.filter((position) => {
+    return !(
+      (position.x === squareToMoveTo.x && position.y === squareToMoveTo.y) ||
+      (position.x === pieceToMove.x && position.y === pieceToMove.y)
+    );
+  });
+
+  // Update the piece's position
+  pieceToMove.x = squareToMoveTo.x;
+  pieceToMove.y = squareToMoveTo.y;
+
+  // Check if the piece is a pawn, rook, or king and update the hasMoved property
+  if (
+    pieceToMove.type === "pawn" ||
+    pieceToMove.type === "rook" ||
+    pieceToMove.type === "king"
+  ) {
+    pieceToMove.hasMoved = true;
+  }
+  game.piecePositions.push(pieceToMove);
+
+  return game;
 }
 //Defualt Variables
 const defaultPiecePositions = [
@@ -621,10 +829,11 @@ const defaultPiecePositions = [
     color: "white",
   },
   {
+    //change back to x3 and y1
     piece: "whitePawn",
     type: "pawn",
-    x: 3,
-    y: 1,
+    x: 7,
+    y: 6,
     hasMoved: false,
     color: "white",
   },
@@ -640,7 +849,7 @@ const defaultPiecePositions = [
     piece: "whitePawn",
     type: "pawn",
     x: 5,
-    y: 1,
+    y: 2,
     hasMoved: false,
     color: "white",
   },
@@ -700,8 +909,8 @@ const defaultPiecePositions = [
   {
     piece: "blackPawn",
     type: "pawn",
-    x: 1,
-    y: 6,
+    x: 3,
+    y: 2,
     hasMoved: false,
     color: "black",
   },
