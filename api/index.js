@@ -716,7 +716,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
         } else if (pieceToMove.y < squareToMoveTo.y) {
           let pointsArray = [];
           for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
-            pointsArray.push({ x: pieceToMove.x, y:. i });
+            pointsArray.push({ x: pieceToMove.x, y: i });
           }
 
           for (let i = 0; i < game.piecePositions.length; i++) {
