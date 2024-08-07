@@ -513,7 +513,20 @@ function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
 }
 
 //TODO
-function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {}
+async function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {
+  gameState = await moveRook(pieceToMove, squareToMoveTo, playerColor, game);
+
+  if (gameState != null) {
+    return gameState;
+  }
+
+  gameState = await moveBishop(pieceToMove, squareToMoveTo, playerColor, game);
+  if (gameState != null) {
+    return gameState;
+  } else {
+    return null;
+  }
+}
 //TODO
 function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {}
 //TODO
@@ -562,7 +575,8 @@ const defaultPiecePositions = [
   },
   { piece: "whiteKnight", type: "knight", x: 1, y: 0, color: "white" },
   { piece: "whiteBishop", type: "bishop", x: 2, y: 0, color: "white" },
-  { piece: "whiteQueen", type: "queen", x: 3, y: 0, color: "white" },
+  //change back to x3 and y0
+  { piece: "whiteQueen", type: "queen", x: 3, y: 5, color: "white" },
   {
     piece: "whiteKing",
     type: "king",
