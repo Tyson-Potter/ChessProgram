@@ -186,21 +186,16 @@ function generateRandomId() {
 async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
   let gameState;
   switch (pieceToMove.type) {
-    case "bishop":
-      gameState = await moveBishop(
+    case "rook":
+      gameState = await moveRook(
         pieceToMove,
         squareToMoveTo,
         playerColor,
         game
       );
-
-      if (gameState != null) {
-        return gameState;
-      } else {
-        return null;
-      }
-    case "rook":
-      gameState = await moveRook(
+      return gameState;
+    case "bishop":
+      gameState = await moveBishop(
         pieceToMove,
         squareToMoveTo,
         playerColor,
@@ -262,14 +257,14 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
 //TODO
 function checkForCheckMate() {}
 //TODO
-function checkLegalGameState(game, playerColor) {
+function checkForLegalGameState(game, playerColor) {
   return true;
 }
 
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
-  checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game);
+  validateMovment(pieceToMove, squareToMoveTo, playerColor, game);
   let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkLegalGameState(potentialGameState, playerColor);
+  checkForLegalGameState(potentialGameState, playerColor);
   return potentialGameState;
 }
 
@@ -641,7 +636,7 @@ function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {
     }
   }
 }
-function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
+function validateMovment(pieceToMove, squareToMoveTo, playerColor, game) {
   switch (pieceToMove.type) {
     case "bishop":
 
@@ -659,17 +654,8 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
           for (let i = squareToMoveTo.x + 1; i < pieceToMove.x; i++) {
             pointsArray.push({ x: i, y: pieceToMove.y });
           }
+          checkForPiecesInWay(game, pointsArray);
 
-          for (let i = 0; i < game.piecePositions.length; i++) {
-            for (let point of pointsArray) {
-              if (
-                game.piecePositions[i].x == point.x &&
-                game.piecePositions[i].y == point.y
-              ) {
-                throw new PieceInTheWayError();
-              }
-            }
-          }
           return true;
           ///////////////////////////////////////////////////////
         } else if (pieceToMove.x < squareToMoveTo.x) {
@@ -677,17 +663,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
           for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
             pointsArray.push({ x: i, y: pieceToMove.y });
           }
-
-          for (let i = 0; i < game.piecePositions.length; i++) {
-            for (let point of pointsArray) {
-              if (
-                game.piecePositions[i].x == point.x &&
-                game.piecePositions[i].y == point.y
-              ) {
-                throw new PieceInTheWayError();
-              }
-            }
-          }
+          checkForPiecesInWay(game, pointsArray);
 
           return true;
         }
@@ -699,17 +675,8 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
           for (let i = squareToMoveTo.y + 1; i < pieceToMove.y; i++) {
             pointsArray.push({ x: pieceToMove.x, y: i });
           }
+          checkForPiecesInWay(game, pointsArray);
 
-          for (let i = 0; i < game.piecePositions.length; i++) {
-            for (let point of pointsArray) {
-              if (
-                game.piecePositions[i].x == point.x &&
-                game.piecePositions[i].y == point.y
-              ) {
-                throw new PieceInTheWayError();
-              }
-            }
-          }
           return true;
           //////////////////////////////////////////////////////////
         } else if (pieceToMove.y < squareToMoveTo.y) {
@@ -717,18 +684,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
           for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
             pointsArray.push({ x: pieceToMove.x, y: i });
           }
-
-          for (let i = 0; i < game.piecePositions.length; i++) {
-            for (let point of pointsArray) {
-              if (
-                game.piecePositions[i].x == point.x &&
-                game.piecePositions[i].y == point.y
-              ) {
-                throw new PieceInTheWayError();
-              }
-            }
-          }
-
+          checkForPiecesInWay(game, pointsArray);
           return true;
         }
       } else {
@@ -769,6 +725,18 @@ function updateGameState(game, pieceToMove, squareToMoveTo) {
   game.piecePositions.push(pieceToMove);
 
   return game;
+}
+function checkForPiecesInWay(game, pointsArray) {
+  for (let i = 0; i < game.piecePositions.length; i++) {
+    for (let point of pointsArray) {
+      if (
+        game.piecePositions[i].x == point.x &&
+        game.piecePositions[i].y == point.y
+      ) {
+        throw new PieceInTheWayError();
+      }
+    }
+  }
 }
 //Defualt Variables
 const defaultPiecePositions = [
