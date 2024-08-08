@@ -3,7 +3,12 @@ const app = express();
 const cors = require("cors");
 const dotenv = require("dotenv");
 require("dotenv").config();
-
+const {
+  NotYourTurnError,
+  PieceInTheWayError,
+  CannotNavigateError,
+  GameInactiveError,
+} = require("./errors");
 const { MongoClient, ObjectId } = require("mongodb");
 
 const port = process.env.PORT;
@@ -27,6 +32,12 @@ async function connectToDatabase() {
     //TODO
     //clear colletion DELTE ME LATER
     await collection.deleteMany({});
+    app.use((err, req, res, next) => {
+      res.status(err.statusCode || 500).json({
+        error: err.message,
+        type: err.name,
+      });
+    });
     //TODO
     // Start the server after the connection is established
     app.listen(port, () => {
@@ -121,11 +132,13 @@ app.put("/move", async (req, res) => {
     let squareToMoveTo = req.body.squareToMoveTo;
 
     const game = await collection.findOne({ _id: gameId });
-
-    if (game.currentTurn != playerColor || game.gameStatus != "active") {
-      res.status(500).json({ error: "Not Your Turn" });
+    console.log(playerColor);
+    if (game.currentTurn != playerColor) {
+      throw new NotYourTurnError("It's not your turn");
     }
-
+    if (game.gameStatus != "active") {
+      throw new GameInactiveError("The game is inactive");
+    }
     let newGameState = await movePiece(
       pieaceToMove,
       squareToMoveTo,
@@ -254,21 +267,10 @@ function checkLegalGameState(game, playerColor) {
 }
 
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
-  let pieceNotInWay = checkForPiecesInWay(
-    pieceToMove,
-    squareToMoveTo,
-    playerColor,
-    game
-  );
-  if (pieceNotInWay) {
-    let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-    let isLegalGameState = checkLegalGameState(potentialGameState, playerColor);
-    if (isLegalGameState) {
-      return potentialGameState;
-    }
-  } else {
-    return null;
-  }
+  checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game);
+  let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+  checkLegalGameState(potentialGameState, playerColor);
+  return potentialGameState;
 }
 
 function moveBishop(pieceToMove, squareToMoveTo, playerColor, game) {
@@ -649,7 +651,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
         pieceToMove.x != squareToMoveTo.x &&
         pieceToMove.y != squareToMoveTo.y
       ) {
-        return null;
+        throw new CannotNavigateError();
       } else if (pieceToMove.x != squareToMoveTo.x) {
         //moving on the x axis to the left
         if (pieceToMove.x > squareToMoveTo.x) {
@@ -664,11 +666,12 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
                 game.piecePositions[i].x == point.x &&
                 game.piecePositions[i].y == point.y
               ) {
-                return null; // Exit if a piece is found in the way
+                throw new PieceInTheWayError();
               }
             }
           }
           return true;
+          ///////////////////////////////////////////////////////
         } else if (pieceToMove.x < squareToMoveTo.x) {
           let pointsArray = [];
           for (let i = pieceToMove.x + 1; i < squareToMoveTo.x; i++) {
@@ -681,20 +684,14 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
                 game.piecePositions[i].x == point.x &&
                 game.piecePositions[i].y == point.y
               ) {
-                let returnGameState = updateGameState(
-                  game,
-                  pieceToMove,
-                  squareToMoveTo
-                );
-                if (returnGameState != null) {
-                  return returnGameState;
-                }
+                throw new PieceInTheWayError();
               }
             }
           }
 
           return true;
         }
+        ////////////////////////////////////////////////////////////////
       } else if (pieceToMove.y != squareToMoveTo.y) {
         //
         if (pieceToMove.y > squareToMoveTo.y) {
@@ -709,10 +706,12 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
                 game.piecePositions[i].x == point.x &&
                 game.piecePositions[i].y == point.y
               ) {
+                throw new PieceInTheWayError();
               }
             }
           }
           return true;
+          //////////////////////////////////////////////////////////
         } else if (pieceToMove.y < squareToMoveTo.y) {
           let pointsArray = [];
           for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
@@ -725,7 +724,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
                 game.piecePositions[i].x == point.x &&
                 game.piecePositions[i].y == point.y
               ) {
-                return null; // Exit if a piece is found in the way
+                throw new PieceInTheWayError();
               }
             }
           }
@@ -733,7 +732,7 @@ function checkForPiecesInWay(pieceToMove, squareToMoveTo, playerColor, game) {
           return true;
         }
       } else {
-        return null;
+        throw new PieceInTheWayError();
       }
     case "knight":
 
