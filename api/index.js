@@ -299,17 +299,19 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
     playerColor,
     game
   );
-  if (castleType) {
-    let CastleInfo = checkIsLegalCastle(
+  console.log(castleType + "Castle Type");
+  if (castleType != null) {
+    let castleInfo = checkIsLegalCastle(
       castleType,
       pieceToMove,
       squareToMoveTo,
       playerColor,
       game
     );
-    if (!CastleInfo) {
-      let rookToMove = CastleInfo.rookToMove;
-      let rookSquareToMoveTo = CastleInfo.rookSquareToMoveTo;
+    console.log(castleInfo + "Castle info");
+    if (castleInfo != null) {
+      let rookToMove = castleInfo.rookToMove;
+      let rookSquareToMoveTo = castleInfo.rookSquareToMoveTo;
       let potentialGameState = updateGameState(
         game,
         pieceToMove,
@@ -322,14 +324,14 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
       );
       return potentialGameState;
     }
+  } else {
+    console.log("Normal King Movment");
+    //normal king movment
+    validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
+    let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
+    checkForLegalGameState(potentialGameState, playerColor);
+    return potentialGameState;
   }
-
-  console.log("Normal King Movment");
-  //normal king movment
-  validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
-  let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkForLegalGameState(potentialGameState, playerColor);
-  return potentialGameState;
 }
 function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {
   validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
@@ -723,8 +725,17 @@ function validateMovment(
             for (let i = pieceToMove.y + 1; i < squareToMoveTo.y; i++) {
               pointsArray.push({ x: pieceToMove.x, y: i });
             }
-            checkForPiecesInWay(game, pointsArray);
-            return true;
+            if (checkSafety) {
+              //Piece is not in the way so we can move
+              if (!checkForPiecesInWay(game, pointsArray, checkSafety)) {
+                return true;
+              } else {
+                return false;
+              }
+            } else {
+              checkForPiecesInWay(game, pointsArray);
+              return;
+            }
           }
         }
       }
@@ -972,7 +983,7 @@ function checkForPiecesInWay(game, pointsArray, checkSafety) {
 }
 
 //TODO
-function checkIfEnemyPieceCanAttackSquare(game, playerColor, point) {
+function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
   console.log("checking if enemy piece can attack square " + point);
   //if a king move you have to check pawns and enemmy king otherwise you dont
 
@@ -991,8 +1002,11 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point) {
               true
             )
           ) {
-            console.log("bishop can attack square") + point;
-            throw new CannotNavigateError();
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
           }
           break;
         case "rook":
@@ -1006,7 +1020,11 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point) {
             )
           ) {
             console.log("rook can attack square") + point;
-            throw new CannotNavigateError();
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
           }
           break;
         case "queen":
@@ -1020,7 +1038,11 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point) {
             )
           ) {
             console.log("rook can attack square") + point;
-            throw new CannotNavigateError();
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
           }
           break;
       }
@@ -1046,7 +1068,7 @@ function checkForRookInRightPositionAndHasNotMoved(
       }
     }
   }
-  throw new CannotNavigateError();
+  return null;
 }
 function checkIsLegalCastle(
   castleInfo,
@@ -1058,7 +1080,7 @@ function checkIsLegalCastle(
   console.log(castleInfo);
   if (playerColor === "white") {
     if (pieceToMove.hasMoved === true) {
-      throw new CannotNavigateError();
+      return null;
     }
 
     let pointsArray = [];
@@ -1072,16 +1094,28 @@ function checkIsLegalCastle(
           { x: 6, y: 0 },
         ];
         //check if there are pieces in the way of the king
-        checkForPiecesInWay(game, pointsArrayKing, false);
+        if (checkForPiecesInWay(game, pointsArrayKing, true)) {
+          return null;
+        }
+
         //check if rook is in the right position and has not moved
         let rookLocationWhite = { x: 7, y: 0 };
-        checkForRookInRightPositionAndHasNotMoved(
-          game,
-          playerColor,
-          rookLocationWhite
-        );
+        if (
+          !checkForRookInRightPositionAndHasNotMoved(
+            game,
+            playerColor,
+            rookLocationWhite
+          )
+        ) {
+          return null;
+        }
+
         for (point of pointsArrayKing) {
-          checkIfEnemyPieceCanAttackSquare(game, playerColor, point, false);
+          if (
+            checkIfEnemyPieceCanAttackSquare(game, playerColor, point, true)
+          ) {
+            return null;
+          }
         }
         return {
           rookToMove: { x: 7, y: 0 },
@@ -1098,22 +1132,33 @@ function checkIsLegalCastle(
           { x: 2, y: 0 },
           { x: 3, y: 0 },
         ];
-        checkForPiecesInWay(game, pointsArray);
+        if (checkForPiecesInWay(game, pointsArray, true)) {
+          return null;
+        }
         //check if rook is in the right position and has not moved
         let rookLocation = { x: 0, y: 0 };
-        checkForRookInRightPositionAndHasNotMoved(
-          game,
-          playerColor,
-          rookLocation
-        );
+        if (
+          !checkForRookInRightPositionAndHasNotMoved(
+            game,
+            playerColor,
+            rookLocation
+          )
+        ) {
+          return null;
+        }
         for (point of pointsArray) {
-          checkIfEnemyPieceCanAttackSquare(game, playerColor, point, false);
+          if (
+            checkIfEnemyPieceCanAttackSquare(game, playerColor, point, true)
+          ) {
+            return null;
+          }
         }
         return {
           rookToMove: { x: 0, y: 0 },
           rookSquareToMoveTo: { x: 3, y: 0 },
         };
     }
+    return false;
     //black
   } else {
     switch (castleInfo) {
@@ -1124,16 +1169,27 @@ function checkIsLegalCastle(
           { x: 6, y: 7 },
         ];
         // Check if there are pieces in the way of the king
-        checkForPiecesInWay(game, pointsArray);
+        if (checkForPiecesInWay(game, pointsArray, true)) {
+          return null;
+        }
         // Check if rook is in the right position and has not moved
         let rookLocation = { x: 7, y: 7 };
-        checkForRookInRightPositionAndHasNotMoved(
-          game,
-          playerColor,
-          rookLocation
-        );
+
+        if (
+          !checkForRookInRightPositionAndHasNotMoved(
+            game,
+            playerColor,
+            rookLocation
+          )
+        ) {
+          return null;
+        }
         for (let point of pointsArray) {
-          checkIfEnemyPieceCanAttackSquare(game, playerColor, point, false);
+          if (
+            checkIfEnemyPieceCanAttackSquare(game, playerColor, point, true)
+          ) {
+            return null;
+          }
         }
         return {
           rookToMove: { x: 7, y: 7 },
@@ -1148,22 +1204,34 @@ function checkIsLegalCastle(
           { x: 3, y: 7 },
         ];
         // Check if there are pieces in the way of the king
-        checkForPiecesInWay(game, pointsArrayQueen);
+        if (checkForPiecesInWay(game, pointsArrayQueen, true)) {
+          return null;
+        }
         // Check if rook is in the right position and has not moved
         let rookLocationQueen = { x: 0, y: 7 };
-        checkForRookInRightPositionAndHasNotMoved(
-          game,
-          playerColor,
-          rookLocationQueen
-        );
+
+        if (
+          !checkForRookInRightPositionAndHasNotMoved(
+            game,
+            playerColor,
+            rookLocationQueen
+          )
+        ) {
+          return null;
+        }
         for (let point of pointsArrayQueen) {
-          checkIfEnemyPieceCanAttackSquare(game, playerColor, point, false);
+          if (
+            checkIfEnemyPieceCanAttackSquare(game, playerColor, point, true)
+          ) {
+            return null;
+          }
         }
         return {
           rookToMove: { x: 0, y: 7 },
           rookSquareToMoveTo: { x: 3, y: 7 },
         };
     }
+    return null;
   }
 }
 
@@ -1192,7 +1260,7 @@ function checkIsCastle(pieceToMove, squareToMoveTo, playerColor, game) {
 
       //is black
     }
-    return false;
+    return null;
   } else {
     if (
       squareToMoveTo.x === 6 &&
@@ -1215,7 +1283,7 @@ function checkIsCastle(pieceToMove, squareToMoveTo, playerColor, game) {
       return returnInfo;
     }
   }
-  return false;
+  return null;
 }
 //Defualt Variables
 // const defaultPiecePositions = [
