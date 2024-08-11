@@ -229,7 +229,6 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
     case "king":
       gameState = moveKing(pieceToMove, squareToMoveTo, playerColor, game);
       return gameState;
-
     case "pawn":
       gameState = movePawn(pieceToMove, squareToMoveTo, playerColor, game);
       return gameState;
@@ -327,7 +326,7 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
   } else {
     console.log("Normal King Movment");
     //normal king movment
-    validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
+    validateMovment(pieceToMove, squareToMoveTo, playerColor, game, true);
     let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
     checkForLegalGameState(potentialGameState, playerColor);
     return potentialGameState;
@@ -741,6 +740,16 @@ function validateMovment(
       }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     case "king":
+      if (
+        checkIfEnemyPieceCanAttackSquare(
+          game,
+          playerColor,
+          squareToMoveTo,
+          true
+        )
+      ) {
+        throw new CannotNavigateError();
+      }
       console.log("King Movment normal");
       const possibleMoves = [
         { x: pieceToMove.x + 1, y: pieceToMove.y + 0 }, // Right
@@ -981,7 +990,57 @@ function checkForPiecesInWay(game, pointsArray, checkSafety) {
   console.log("no piece in the way");
   return false;
 }
+function kingCanAttackSquare(pieceToMove, squareToMoveTo) {
+  const possibleMoves = [
+    { x: pieceToMove.x + 1, y: pieceToMove.y + 0 }, // Right
+    { x: pieceToMove.x - 1, y: pieceToMove.y + 0 }, // Left
+    { x: pieceToMove.x + 0, y: pieceToMove.y + 1 }, // Up
+    { x: pieceToMove.x + 0, y: pieceToMove.y - 1 }, // Down
+    { x: pieceToMove.x + 1, y: pieceToMove.y + 1 }, // Up-Right
+    { x: pieceToMove.x + 1, y: pieceToMove.y - 1 }, // Down-Right
+    { x: pieceToMove.x - 1, y: pieceToMove.y + 1 }, // Up-Left
+    { x: pieceToMove.x - 1, y: pieceToMove.y - 1 }, // Down-Left
+  ];
+  for (let i = 0; i < possibleMoves.length; i++) {
+    const move = possibleMoves[i];
 
+    if (move.x === squareToMoveTo.x && move.y === squareToMoveTo.y) {
+      return true;
+    }
+  }
+}
+//////////////////////////////////////////////////////////////////////////////////////////
+function pawnCanAttackSquare(pieceToMove, squareToMoveTo, playerColor) {
+  console.log("checking if pawn can attack square");
+  console.log(squareToMoveTo);
+  if (playerColor === "black") {
+    if (
+      pieceToMove.y + 1 == squareToMoveTo.y &&
+      pieceToMove.x + 1 == squareToMoveTo.x
+    ) {
+      return true;
+    } else if (
+      pieceToMove.y + 1 == squareToMoveTo.y &&
+      pieceToMove.x - 1 == squareToMoveTo.x
+    ) {
+      return true;
+    }
+    return false;
+  } else if (playerColor === "white") {
+    if (
+      pieceToMove.y - 1 == squareToMoveTo.y &&
+      pieceToMove.x - 1 == squareToMoveTo.x
+    ) {
+      return true;
+    } else if (
+      pieceToMove.y - 1 == squareToMoveTo.y &&
+      pieceToMove.x + 1 == squareToMoveTo.x
+    ) {
+      return true;
+    }
+    return false;
+  }
+}
 //TODO
 function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
   console.log("checking if enemy piece can attack square " + point);
@@ -1045,6 +1104,19 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
             }
           }
           break;
+        case "pawn":
+          console.log(
+            "checking if pawn can attack square " + game.piecePositions[i],
+            point,
+            playerColor
+          );
+          if (pawnCanAttackSquare(game.piecePositions[i], point, playerColor)) {
+            throw new CannotNavigateError();
+          }
+        case "king":
+          if (kingCanAttackSquare(game.piecePositions[i], point)) {
+            throw new CannotNavigateError();
+          }
       }
     }
   }
