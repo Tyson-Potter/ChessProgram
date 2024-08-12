@@ -193,7 +193,8 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
         playerColor,
         game
       );
-      return gameState;
+
+      return removeInCheck(gameState, playerColor);
 
     case "bishop":
       gameState = await moveBishop(
@@ -202,7 +203,7 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
         playerColor,
         game
       );
-      return gameState;
+      return removeInCheck(gameState, playerColor);
 
     case "knight":
       gameState = await moveKnight(
@@ -213,7 +214,7 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
       );
 
       if (gameState != null) {
-        return gameState;
+        return removeInCheck(gameState, playerColor);
       } else {
         throw new CannotNavigateError();
       }
@@ -225,13 +226,13 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
         playerColor,
         game
       );
-      return gameState;
+      return removeInCheck(gameState, playerColor);
     case "king":
       gameState = moveKing(pieceToMove, squareToMoveTo, playerColor, game);
-      return gameState;
+      return removeInCheck(gameState, playerColor);
     case "pawn":
       gameState = movePawn(pieceToMove, squareToMoveTo, playerColor, game);
-      return gameState;
+      return removeInCheck(gameState, playerColor);
     default:
       console.log("Unknown piece type");
       return null;
@@ -241,22 +242,74 @@ async function movePiece(pieceToMove, squareToMoveTo, playerColor, game) {
 //TODO
 function checkForCheckMate() {}
 //TODO
-function checkForLegalGameState(game, playerColor) {
-  return true;
+function removeInCheck(potentialGameState, playerColor) {
+  let king = getKing(potentialGameState, playerColor);
+  for (let i = 0; i < potentialGameState.piecePositions.length; i++) {
+    if (
+      potentialGameState.piecePositions[i].x === king.x &&
+      potentialGameState.piecePositions[i].y === king.y
+    ) {
+      potentialGameState.piecePositions[i].isInCheck = false;
+
+      return potentialGameState;
+    }
+  }
 }
+function checkIfCurrentPlayerWouldBeInCheck(game, playerColor) {
+  let currentPlayersKing = getKing(game, playerColor);
+
+  checkIfEnemyPieceCanAttackSquare(
+    game,
+    playerColor,
+    currentPlayersKing,
+    false
+  );
+}
+function checkIfEnemyIsInCheck(game, playerColor) {
+  let ememyColor = playerColor === "white" ? "black" : "white";
+  let enemyPlayersKing = getKing(game, ememyColor);
+  console.log(enemyPlayersKing);
+  if (
+    checkIfEnemyPieceCanAttackSquare(game, ememyColor, enemyPlayersKing, true)
+  ) {
+    console.log("Enemy King is in check " + ememyColor);
+    return true;
+  } else {
+    return false;
+  }
+}
+//if  our king owuld be in check after the move then the move is illegal
 
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
   validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
   let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkForLegalGameState(potentialGameState, playerColor);
-  return potentialGameState;
+  checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
+  let enemyColor = playerColor === "white" ? "black" : "white";
+  // console.log("knight movment would not make player in check");
+  if (checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+    console.log("knight movment would make enemy in check");
+
+    potentialGameState = addCheck(potentialGameState, enemyColor);
+    return potentialGameState;
+  } else {
+    return potentialGameState;
+  }
 }
 
 function moveBishop(pieceToMove, squareToMoveTo, playerColor, game) {
   validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
   let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkForLegalGameState(potentialGameState, playerColor);
-  return potentialGameState;
+  checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
+  let enemyColor = playerColor === "white" ? "black" : "white";
+  // console.log("knight movment would not make player in check");
+  if (checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+    console.log("knight movment would make enemy in check");
+
+    potentialGameState = addCheck(potentialGameState, enemyColor);
+    return potentialGameState;
+  } else {
+    return potentialGameState;
+  }
 }
 
 function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
@@ -275,20 +328,56 @@ function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
     const move = possibleMoves[i];
 
     if (move.x === squareToMoveTo.x && move.y === squareToMoveTo.y) {
-      let returnGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-      if (returnGameState != null) {
-        return returnGameState;
+      let potentialGameState = updateGameState(
+        game,
+        pieceToMove,
+        squareToMoveTo
+      );
+      console.log("knight movment");
+      // if (potentialGameState != null) {
+      checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
+      let enemyColor = playerColor === "white" ? "black" : "white";
+      // console.log("knight movment would not make player in check");
+      if (checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+        console.log("knight movment would make enemy in check");
+
+        potentialGameState = addCheck(potentialGameState, enemyColor);
+        return potentialGameState;
+      } else {
+        return potentialGameState;
       }
     }
   }
 
-  throw new CannotNavigateError();
+  return null;
+}
+function addCheck(potentialGameState, ememyColor) {
+  let enemyPlayersKing = getKing(potentialGameState, ememyColor);
+  for (let i = 0; i < potentialGameState.piecePositions.length; i++) {
+    if (
+      potentialGameState.piecePositions[i].x === enemyPlayersKing.x &&
+      potentialGameState.piecePositions[i].y === enemyPlayersKing.y
+    ) {
+      potentialGameState.piecePositions[i].isInCheck = true;
+
+      return potentialGameState;
+    }
+  }
 }
 async function moveQueen(pieceToMove, squareToMoveTo, playerColor, game) {
   validateMovment(pieceToMove, squareToMoveTo, playerColor, game, false);
   let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkForLegalGameState(potentialGameState, playerColor);
-  return potentialGameState;
+  checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
+  let enemyColor = playerColor === "white" ? "black" : "white";
+  // console.log("knight movment would not make player in check");
+  if (checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+    console.log("knight movment would make enemy in check");
+
+    potentialGameState = addCheck(potentialGameState, enemyColor);
+    return potentialGameState;
+  } else {
+    return potentialGameState;
+  }
 }
 //TODO
 function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
@@ -298,7 +387,7 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
     playerColor,
     game
   );
-  console.log(castleType + "Castle Type");
+
   if (castleType != null) {
     let castleInfo = checkIsLegalCastle(
       castleType,
@@ -307,7 +396,7 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
       playerColor,
       game
     );
-    console.log(castleInfo + "Castle info");
+
     if (castleInfo != null) {
       let rookToMove = castleInfo.rookToMove;
       let rookSquareToMoveTo = castleInfo.rookSquareToMoveTo;
@@ -324,11 +413,10 @@ function moveKing(pieceToMove, squareToMoveTo, playerColor, game) {
       return potentialGameState;
     }
   } else {
-    console.log("Normal King Movment");
     //normal king movment
     validateMovment(pieceToMove, squareToMoveTo, playerColor, game, true);
     let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-    checkForLegalGameState(potentialGameState, playerColor);
+    checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
     return potentialGameState;
   }
 }
@@ -342,8 +430,17 @@ function movePawn(pieceToMove, squareToMoveTo, playerColor, game) {
     pieceToMove.piece = "blackQueen";
   }
   let potentialGameState = updateGameState(game, pieceToMove, squareToMoveTo);
-  checkForLegalGameState(potentialGameState, playerColor);
-  return potentialGameState;
+  checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
+  let enemyColor = playerColor === "white" ? "black" : "white";
+  // console.log("knight movment would not make player in check");
+
+  if (checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+    console.log("pawn movment would make enemy in check");
+    potentialGameState = addCheck(potentialGameState, enemyColor);
+    return potentialGameState;
+  } else {
+    return potentialGameState;
+  }
 }
 function validateMovment(
   pieceToMove,
@@ -740,16 +837,6 @@ function validateMovment(
       }
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     case "king":
-      if (
-        checkIfEnemyPieceCanAttackSquare(
-          game,
-          playerColor,
-          squareToMoveTo,
-          true
-        )
-      ) {
-        throw new CannotNavigateError();
-      }
       console.log("King Movment normal");
       const possibleMoves = [
         { x: pieceToMove.x + 1, y: pieceToMove.y + 0 }, // Right
@@ -861,19 +948,15 @@ function validateMovment(
         console.log();
         // check if pawn is moving backwards
         if (pieceToMove.y < squareToMoveTo.y) {
-          console.log("cant move backwards");
           throw new CannotNavigateError();
           //check if moving to far to the left or right
         } else if (Math.abs(pieceToMove.x - squareToMoveTo.x) > 1) {
-          console.log("cant move to far left or right");
           throw new CannotNavigateError();
           //check if pawn is trying to move more then 2 square forward
         } else if (squareToMoveTo.y < pieceToMove.y - 2) {
-          console.log("moving more then 2 squares");
           throw new CannotNavigateError();
           //check if pawn is trying to move 2 squares forward more then once
         } else if (pieceToMove.y - squareToMoveTo.y === 2) {
-          console.log("moving 2 squares black");
           if (pieceToMove.hasMoved === true) {
             throw new CannotNavigateError();
             //check if peices are in the way of the pawn
@@ -891,7 +974,6 @@ function validateMovment(
           squareToMoveTo.x === pieceToMove.x &&
           squareToMoveTo.y + 1 == pieceToMove.y
         ) {
-          console.log("moving 1 square forward black");
           let pointsArray = [{ x: pieceToMove.x, y: pieceToMove.y - 1 }];
           checkForPiecesInWay(game, pointsArray);
           return true;
@@ -904,7 +986,7 @@ function validateMovment(
           pointsArray = [{ x: pieceToMove.x - 1, y: pieceToMove.y - 1 }];
           console.log("attacking diagonally right");
           //check to make sure an enemmy piece is on the square
-          console.log(pointsArray);
+
           for (let i = 0; i < game.piecePositions.length; i++) {
             for (let point of pointsArray) {
               if (
@@ -922,9 +1004,9 @@ function validateMovment(
           pieceToMove.x + 1 == squareToMoveTo.x
         ) {
           pointsArray = [{ x: pieceToMove.x + 1, y: pieceToMove.y - 1 }];
-          console.log("attacking diagonally left black");
+
           //check to make sure an enemmy piece is on the square
-          console.log(pointsArray);
+
           for (let i = 0; i < game.piecePositions.length; i++) {
             for (let point of pointsArray) {
               if (
@@ -979,7 +1061,6 @@ function checkForPiecesInWay(game, pointsArray, checkSafety) {
         game.piecePositions[i].y == point.y
       ) {
         if (checkSafety) {
-          console.log("piece in the way");
           return true;
         } else {
           throw new PieceInTheWayError();
@@ -987,7 +1068,7 @@ function checkForPiecesInWay(game, pointsArray, checkSafety) {
       }
     }
   }
-  console.log("no piece in the way");
+
   return false;
 }
 function kingCanAttackSquare(pieceToMove, squareToMoveTo) {
@@ -1011,8 +1092,6 @@ function kingCanAttackSquare(pieceToMove, squareToMoveTo) {
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 function pawnCanAttackSquare(pieceToMove, squareToMoveTo, playerColor) {
-  console.log("checking if pawn can attack square");
-  console.log(squareToMoveTo);
   if (playerColor === "black") {
     if (
       pieceToMove.y + 1 == squareToMoveTo.y &&
@@ -1041,9 +1120,8 @@ function pawnCanAttackSquare(pieceToMove, squareToMoveTo, playerColor) {
     return false;
   }
 }
-//TODO
+
 function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
-  console.log("checking if enemy piece can attack square " + point);
   //if a king move you have to check pawns and enemmy king otherwise you dont
 
   //add all below and pwan/king move
@@ -1078,7 +1156,6 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
               true
             )
           ) {
-            console.log("rook can attack square") + point;
             if (kingMove) {
               return true;
             } else {
@@ -1096,7 +1173,6 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
               true
             )
           ) {
-            console.log("rook can attack square") + point;
             if (kingMove) {
               return true;
             } else {
@@ -1105,22 +1181,56 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
           }
           break;
         case "pawn":
-          console.log(
-            "checking if pawn can attack square " + game.piecePositions[i],
-            point,
-            playerColor
-          );
+          console.log("game.piecePositions[i]", game.piecePositions[i]);
           if (pawnCanAttackSquare(game.piecePositions[i], point, playerColor)) {
-            throw new CannotNavigateError();
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
           }
         case "king":
           if (kingCanAttackSquare(game.piecePositions[i], point)) {
-            throw new CannotNavigateError();
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
+          }
+        case "knight":
+          if (knightCanAttackSquare(game.piecePositions[i], point)) {
+            if (kingMove) {
+              return true;
+            } else {
+              throw new CannotNavigateError();
+            }
           }
       }
     }
   }
 }
+function knightCanAttackSquare(pieceToMove, squareToMoveTo) {
+  const possibleMoves = [
+    { x: pieceToMove.x + 2, y: pieceToMove.y + 1 },
+    { x: pieceToMove.x + 2, y: pieceToMove.y - 1 },
+    { x: pieceToMove.x - 2, y: pieceToMove.y + 1 },
+    { x: pieceToMove.x - 2, y: pieceToMove.y - 1 },
+    { x: pieceToMove.x + 1, y: pieceToMove.y + 2 },
+    { x: pieceToMove.x + 1, y: pieceToMove.y - 2 },
+    { x: pieceToMove.x - 1, y: pieceToMove.y + 2 },
+    { x: pieceToMove.x - 1, y: pieceToMove.y - 2 },
+  ];
+
+  for (let i = 0; i < possibleMoves.length; i++) {
+    const move = possibleMoves[i];
+
+    if (move.x === squareToMoveTo.x && move.y === squareToMoveTo.y) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function checkForRookInRightPositionAndHasNotMoved(
   game,
   playerColor,
@@ -1149,7 +1259,6 @@ function checkIsLegalCastle(
   playerColor,
   game
 ) {
-  console.log(castleInfo);
   if (playerColor === "white") {
     if (pieceToMove.hasMoved === true) {
       return null;
@@ -1269,7 +1378,6 @@ function checkIsLegalCastle(
         };
 
       case "queenSide":
-        console.log("black is castling queenside");
         let pointsArrayQueen = [
           { x: 1, y: 7 }, // The points the king moves through
           { x: 2, y: 7 },
@@ -1307,7 +1415,6 @@ function checkIsLegalCastle(
   }
 }
 
-//todo
 function checkIsCastle(pieceToMove, squareToMoveTo, playerColor, game) {
   let returnInfo = "";
   //check for castling logic white
@@ -1357,283 +1464,27 @@ function checkIsCastle(pieceToMove, squareToMoveTo, playerColor, game) {
   }
   return null;
 }
-//Defualt Variables
-// const defaultPiecePositions = [
-//   {
-//     piece: "whiteRook",
-//     type: "rook",
-//     x: 2,
-//     y: 3,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whiteBishop",
-//     type: "bishop",
-//     x: 3,
-//     y: 3,
-//     color: "white",
-//   },
-//   // Black pieces surrounding the white rook and white bishop
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 1,
-//     y: 2,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 2,
-//     y: 2,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 3,
-//     y: 2,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 4,
-//     y: 2,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 1,
-//     y: 3,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 4,
-//     y: 3,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 1,
-//     y: 4,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 2,
-//     y: 4,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 3,
-//     y: 4,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 4,
-//     y: 4,
-//     hasMoved: false,
-//     color: "black",
-//   },
-
-//   // Other pieces
-//   { piece: "whiteKnight", type: "knight", x: 1, y: 0, color: "white" },
-//   { piece: "whiteQueen", type: "queen", x: 3, y: 5, color: "white" },
-//   {
-//     piece: "whiteKing",
-//     type: "king",
-//     x: 4,
-//     y: 0,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   { piece: "whiteKnight", type: "knight", x: 6, y: 0, color: "white" },
-//   {
-//     piece: "whiteRook",
-//     type: "rook",
-//     x: 7,
-//     y: 0,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 0,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 1,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 2,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 7,
-//     y: 6,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 4,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 5,
-//     y: 2,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 6,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "whitePawn",
-//     type: "pawn",
-//     x: 7,
-//     y: 1,
-//     hasMoved: false,
-//     color: "white",
-//   },
-//   {
-//     piece: "blackRook",
-//     type: "rook",
-//     x: 0,
-//     y: 7,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   { piece: "blackKnight", type: "knight", x: 1, y: 7, color: "black" },
-//   { piece: "blackBishop", type: "bishop", x: 2, y: 7, color: "black" },
-//   { piece: "blackQueen", type: "queen", x: 3, y: 7, color: "black" },
-//   {
-//     piece: "blackKing",
-//     type: "king",
-//     x: 4,
-//     y: 7,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   { piece: "blackBishop", type: "bishop", x: 5, y: 7, color: "black" },
-//   { piece: "blackKnight", type: "knight", x: 6, y: 7, color: "black" },
-//   {
-//     piece: "blackRook",
-//     type: "rook",
-//     x: 7,
-//     y: 3,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 0,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 3,
-//     y: 2,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 2,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 3,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 4,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 5,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 6,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-//   {
-//     piece: "blackPawn",
-//     type: "pawn",
-//     x: 7,
-//     y: 6,
-//     hasMoved: false,
-//     color: "black",
-//   },
-// ];
+function getKing(game, playerColor) {
+  if (playerColor == "white") {
+    for (let i = 0; i < game.piecePositions.length; i++) {
+      if (
+        game.piecePositions[i].type == "king" &&
+        game.piecePositions[i].color == "white"
+      ) {
+        return game.piecePositions[i];
+      }
+    }
+  } else if (playerColor == "black") {
+    for (let i = 0; i < game.piecePositions.length; i++) {
+      if (
+        game.piecePositions[i].type == "king" &&
+        game.piecePositions[i].color == "black"
+      ) {
+        return game.piecePositions[i];
+      }
+    }
+  }
+}
 
 let defaultBoard = [
   { x: 0, y: 7, color: "white" },
@@ -1703,7 +1554,24 @@ let defaultBoard = [
 ];
 // //base set up
 const defaultPiecePositions = [
-  // White pieces
+  {
+    piece: "whiteKing",
+    type: "king",
+    x: 4,
+    y: 0,
+    hasMoved: false,
+    color: "white",
+    isInCheck: false,
+  },
+  {
+    piece: "blackKing",
+    type: "king",
+    x: 4,
+    y: 7,
+    hasMoved: false,
+    color: "black",
+    isInCheck: false,
+  },
   {
     piece: "whiteRook",
     type: "rook",
@@ -1812,14 +1680,7 @@ const defaultPiecePositions = [
   { piece: "blackKnight", type: "knight", x: 1, y: 7, color: "black" },
   { piece: "blackBishop", type: "bishop", x: 2, y: 7, color: "black" },
   { piece: "blackQueen", type: "queen", x: 3, y: 7, color: "black" },
-  {
-    piece: "blackKing",
-    type: "king",
-    x: 4,
-    y: 7,
-    hasMoved: false,
-    color: "black",
-  },
+
   { piece: "blackBishop", type: "bishop", x: 5, y: 7, color: "black" },
   { piece: "blackKnight", type: "knight", x: 6, y: 7, color: "black" },
   {

@@ -107,21 +107,35 @@ function Board({ gameState, setGameState }) {
       board = [...board].reverse();
     }
 
-    const getPieceAtPosition = (x, y) => {
+    const getPieceAtPosition = (x, y,gettingKing) => {
+      if(gettingKing){
+        return pieces.find((piece) => piece.x === x && piece.y === y) || null;
+      }
       const piece = pieces.find((piece) => piece.x === x && piece.y === y);
+      
       return piece ? piece.piece : null;
+      
     };
     return (
       <>
+      {console.log(pieces)}
         <h1>You Are {localStorage.getItem("color")}</h1>
         <div className="board-container">
+          
           <div className="grid">
+         
             {board.map((square) => (
+            
               <button
                 onClick={() => handleClick(square, event)}
                 key={`${square.x},${square.y}`}
                 id={`${square.x},${square.y}`}
-                className={`${square.color} cell`}
+                className={`${square.color} cell ${
+                  getPieceAtPosition(square.x, square.y, true)?.isInCheck === true
+                    ? 'in-check'
+                    : ''
+                }`}
+                
               >
                 {getPieceAtPosition(square.x, square.y) ? (
                   <img

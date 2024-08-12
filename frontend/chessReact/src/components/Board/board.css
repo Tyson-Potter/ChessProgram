@@ -28,4 +28,6 @@ img{
 }
 .selectedPiece{
 background-color: purple;
-}
+}.in-check {
+    background-color: red;
+  }
