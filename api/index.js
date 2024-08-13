@@ -268,16 +268,83 @@ function checkIfCurrentPlayerWouldBeInCheck(game, playerColor) {
 function checkIfEnemyIsInCheck(game, playerColor) {
   let ememyColor = playerColor === "white" ? "black" : "white";
   let enemyPlayersKing = getKing(game, ememyColor);
-  console.log(enemyPlayersKing);
+
   if (
     checkIfEnemyPieceCanAttackSquare(game, ememyColor, enemyPlayersKing, true)
   ) {
-    console.log("Enemy King is in check " + ememyColor);
     return true;
   } else {
     return false;
   }
 }
+
+function checkForStaleMate(game, playerColor) {
+  for (let i = 0; i < game.piecePositions.length; i++) {
+    if (game.piecePositions[i].color === playerColor) {
+      switch (game.piecePositions[i].type) {
+        case "knight":
+          let possibleMoves = [
+            {
+              x: game.piecePositions[i].x + 2,
+              y: game.piecePositions[i].y + 1,
+            },
+            {
+              x: game.piecePositions[i].x + 2,
+              y: game.piecePositions[i].y - 1,
+            },
+            {
+              x: game.piecePositions[i].x - 2,
+              y: game.piecePositions[i].y + 1,
+            },
+            {
+              x: game.piecePositions[i].x - 2,
+              y: game.piecePositions[i].y - 1,
+            },
+            {
+              x: game.piecePositions[i].x + 1,
+              y: game.piecePositions[i].y + 2,
+            },
+            {
+              x: game.piecePositions[i].x + 1,
+              y: game.piecePositions[i].y - 2,
+            },
+            {
+              x: game.piecePositions[i].x - 1,
+              y: game.piecePositions[i].y + 2,
+            },
+            {
+              x: game.piecePositions[i].x - 1,
+              y: game.piecePositions[i].y - 2,
+            },
+          ];
+
+          const validMoves = possibleMoves.filter(
+            (move) => move.x > 0 && move.x < 8 && move.y > 0 && move.y < 8
+          );
+          // console.log("valid moves");
+          console.log(game.piecePositions[i]);
+          console.log(validMoves);
+
+          // for (let i = 0; i < validMoves.length; i++) {
+          //   let potentialGameState = updateGameState(
+          //     game,
+          //     game.piecePositions[i],
+          //     validMoves[i]
+          //   );
+          //   if (!checkIfEnemyIsInCheck(potentialGameState, playerColor)) {
+          //     console.log("not stalemate");
+          //     return false;
+          //   }
+          // }
+
+          //  return false;
+          break;
+      }
+    }
+  }
+  return true;
+}
+
 //if  our king owuld be in check after the move then the move is illegal
 
 function moveRook(pieceToMove, squareToMoveTo, playerColor, game) {
@@ -335,6 +402,7 @@ function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
       );
       console.log("knight movment");
       // if (potentialGameState != null) {
+
       checkIfCurrentPlayerWouldBeInCheck(potentialGameState, playerColor);
       let enemyColor = playerColor === "white" ? "black" : "white";
       // console.log("knight movment would not make player in check");
@@ -344,6 +412,11 @@ function moveKnight(pieceToMove, squareToMoveTo, playerColor, game) {
         potentialGameState = addCheck(potentialGameState, enemyColor);
         return potentialGameState;
       } else {
+        // if (checkForStaleMate(potentialGameState, playerColor)) {
+        //   //add logic to tell both players that the game is a stalemate
+        //   console.log("Stalemate");
+        //   return potentialGameState;
+        // }
         return potentialGameState;
       }
     }
@@ -1181,7 +1254,6 @@ function checkIfEnemyPieceCanAttackSquare(game, playerColor, point, kingMove) {
           }
           break;
         case "pawn":
-          console.log("game.piecePositions[i]", game.piecePositions[i]);
           if (pawnCanAttackSquare(game.piecePositions[i], point, playerColor)) {
             if (kingMove) {
               return true;
