@@ -1,34 +1,42 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import "./Messenger.css";
 import MessengerInput from "./MessengerInput";
 import Message from "./Message";
 
-const Messenger = ({ gameState,playerName }) => {
+const Messenger = ({ gameState, playerName }) => {
+  let messages = gameState.chat.messages;
+  //if a new message is added auto scroll to the bottom
+  let messagesLength = messages.length;
+  const chatContainerRef = useRef(null);
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [messagesLength]); // Run this effect whenever messages change
+
   const [myKey, setMyKey] = useState(false);
-  if(myKey===false){
-    localStorage.setItem("key",gameState.key);
+  if (myKey === false) {
+    localStorage.setItem("key", gameState.key);
     setMyKey(gameState.key);
   }
-  
- 
+
   const handleSendMessage = (content) => {
-   console.log("Sending Message");
-    sendMessage(playerName,content,localStorage.getItem("gameId"))
+    console.log("Sending Message");
+    sendMessage(playerName, content, localStorage.getItem("gameId"));
   };
-  let messages=gameState.chat.messages;
- 
+
   return (
     <div className="messageComponentContainer">
-      <h1>{localStorage.getItem("key")}</h1>
-    
-      <div className="Chat-Container">
-     
+      <div className="Chat-Container" ref={chatContainerRef}>
         {messages.map((message, index) => (
-          
-          <Message key={index} owner={message.owner} content={message.content} />
-          
+          <Message
+            key={index}
+            owner={message.owner}
+            content={message.content}
+          />
         ))}
       </div>
       <MessengerInput handleSendMessage={handleSendMessage} />
@@ -36,18 +44,20 @@ const Messenger = ({ gameState,playerName }) => {
   );
 };
 
-
-async function sendMessage(playerName,content,gameId) {
-  let messageContent =await encryptMessage(localStorage.getItem("key"),content);
+async function sendMessage(playerName, content, gameId) {
+  let messageContent = await encryptMessage(
+    localStorage.getItem("key"),
+    content
+  );
   const response = await fetch("http://localhost:3000/sendMessage", {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      playerName:playerName,
-      messageContent:messageContent,
-      gameId
+      playerName: playerName,
+      messageContent: messageContent,
+      gameId,
     }),
   });
 
@@ -67,7 +77,7 @@ async function encryptMessage(sharedKeyBase64, message) {
   // Import the shared key from Base64 format
   const key = await crypto.subtle.importKey(
     "raw",
-    Uint8Array.from(atob(sharedKeyBase64), c => c.charCodeAt(0)),
+    Uint8Array.from(atob(sharedKeyBase64), (c) => c.charCodeAt(0)),
     { name: "AES-GCM" },
     false,
     ["encrypt"]
@@ -94,6 +104,5 @@ async function encryptMessage(sharedKeyBase64, message) {
   // Convert to Base64 for easy transport
   return btoa(String.fromCharCode(...combined));
 }
-
 
 export default Messenger;

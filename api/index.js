@@ -11,7 +11,6 @@ const {
   GameInactiveError,
 } = require("./errors");
 const { MongoClient, ObjectId } = require("mongodb");
-const { chat } = require("googleapis/build/src/apis/chat");
 
 const port = process.env.PORT;
 const uri = process.env.uri;
