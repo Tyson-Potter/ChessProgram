@@ -3,11 +3,16 @@ import { useState,useEffect } from "react";
 import "./App.css";
 import Lobby from "./components/Lobby/Lobby";
 import Alert from "./components/Alert/Alert";
+import Messenger from "./components/Messenger/Messenger"
 function App() {
   const [gameState, setGameState] = useState(false);
+ 
   const [playerName, setPlayerName] = useState(
     localStorage.getItem("playerName")
   );
+
+ 
+
   let gameId = localStorage.getItem("gameId");
   useEffect(() => {
     if (!gameId) {
@@ -44,7 +49,11 @@ function App() {
       )}
 
       {gameState ? (
-        <Board gameState={gameState} setGameState={setGameState} />
+         <><Messenger gameState={gameState} playerName={playerName} />
+           <Board gameState={gameState} setGameState={setGameState} />
+           </>
+      
+        
       ) : (
         <Lobby gameState={gameState} setGameState={setGameState} />
       )}

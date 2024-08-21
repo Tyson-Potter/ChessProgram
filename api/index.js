@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const dotenv = require("dotenv");
 require("dotenv").config();
+const crypto = require("crypto");
 const {
   NotYourTurnError,
   PieceInTheWayError,
@@ -10,6 +11,7 @@ const {
   GameInactiveError,
 } = require("./errors");
 const { MongoClient, ObjectId } = require("mongodb");
+const { chat } = require("googleapis/build/src/apis/chat");
 
 const port = process.env.PORT;
 const uri = process.env.uri;
@@ -53,7 +55,14 @@ connectToDatabase();
 //End Points
 app.post("/createGame", async (req, res) => {
   try {
+    let chat = {
+      messages: [],
+    };
+    const key = crypto.randomBytes(32);
+    const sharedKeyBase64 = key.toString("base64");
     const game = {
+      key: sharedKeyBase64,
+      chat: chat,
       creator: req.body.creator,
       currentTurn: "white",
       numberOfPlayers: 1,
@@ -89,6 +98,7 @@ app.put("/joinGame", async (req, res) => {
   try {
     // Ensure the ID is a valid ObjectId
     const game = await collection.findOne({ _id: gameId });
+    console.log(game.key);
     if (game.numberOfPlayers === 2) {
       res.status(404).send("Game is full");
     }
@@ -97,7 +107,9 @@ app.put("/joinGame", async (req, res) => {
     const updatedFields = {
       numberOfPlayers: 2,
       gameStatus: "active",
+      key: "",
     };
+
     const result = await collection.updateOne(
       { _id: gameId },
       { $set: updatedFields }
@@ -122,8 +134,25 @@ app.get("/getGames", async (req, res) => {
     res.status(500).json({ error: "Failed to insert document" });
   }
 });
+app.put("/sendMessage", async (req, res) => {
+  try {
+    const { playerName, messageContent, gameId } = req.body;
 
-//TODO
+    const game = await collection.findOne({ _id: gameId });
+    game.chat.messages.push({ owner: playerName, content: messageContent });
+    if (!game) {
+      return res.status(404).json({ error: "Game not found" });
+    }
+
+    await collection.updateOne({ _id: gameId }, { $set: { ...game } });
+
+    res.status(200).json({ success: "Move completed" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to move piece" });
+  }
+});
+
 app.put("/move", async (req, res) => {
   try {
     let gameId = req.body.gameId;
